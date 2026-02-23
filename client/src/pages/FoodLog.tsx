@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
 import { queryKeys, type FoodSearchResult, type FoodEntry, type MealType } from '../types';
 import { useFoodSearch } from '../hooks/useFoodSearch';
 import FoodSearchBar from '../components/food/FoodSearchBar';
 import FoodCard from '../components/food/FoodCard';
+import BarcodeScanner from '../components/food/BarcodeScanner';
 
 const MEAL_TYPES: { value: MealType; label: string }[] = [
   { value: 'breakfast', label: 'Breakfast' },
@@ -19,6 +20,9 @@ const FoodLog = () => {
   const [selected, setSelected] = useState<FoodSearchResult | null>(null);
   const [servingG, setServingG] = useState(100);
   const [mealType, setMealType] = useState<MealType>('lunch');
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [barcodeLoading, setBarcodeLoading] = useState(false);
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
 
   const { data: results, isLoading: isSearching, isError: searchError } = useFoodSearch(searchQuery);
 
@@ -51,6 +55,20 @@ const FoodLog = () => {
     setServingG(100);
   };
 
+  const handleBarcodeScan = useCallback(async (code: string) => {
+    setScannerOpen(false);
+    setBarcodeLoading(true);
+    setBarcodeError(null);
+    try {
+      const result = await apiFetch<FoodSearchResult>(`/search/barcode/${encodeURIComponent(code)}`);
+      handleSelect(result);
+    } catch {
+      setBarcodeError('Product not found for this barcode.');
+    } finally {
+      setBarcodeLoading(false);
+    }
+  }, []);
+
   const handleLog = () => {
     if (!selected) return;
     logMutation.mutate(selected);
@@ -62,7 +80,29 @@ const FoodLog = () => {
     <main className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Log Food</h1>
 
-      <FoodSearchBar onSearch={setSearchQuery} />
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <FoodSearchBar onSearch={setSearchQuery} />
+        </div>
+        <button
+          type="button"
+          onClick={() => setScannerOpen(true)}
+          aria-label="Scan barcode"
+          className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        >
+          Scan
+        </button>
+      </div>
+
+      {scannerOpen && (
+        <BarcodeScanner
+          onScan={handleBarcodeScan}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
+
+      {barcodeLoading && <p className="mt-4 text-sm text-gray-500">Looking up barcode...</p>}
+      {barcodeError && <p className="mt-4 text-sm text-red-500">{barcodeError}</p>}
 
       {isSearching && <p className="mt-4 text-sm text-gray-500">Searching...</p>}
       {searchError && <p className="mt-4 text-sm text-red-500">Search failed. Try again.</p>}
