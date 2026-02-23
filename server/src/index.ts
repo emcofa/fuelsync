@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { clerkMiddleware } from '@clerk/express';
 import { errorHandler } from './middleware/errorHandler';
+import userRoutes from './routes/user';
+import goalsRoutes from './routes/goals';
 
 dotenv.config();
 
@@ -14,9 +16,12 @@ app.use(clerkMiddleware({
   secretKey: process.env.CLERK_SECRET_KEY,
 }));
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
+
+app.use('/api/user', userRoutes);
+app.use('/api/goals', goalsRoutes);
 
 app.use(errorHandler);
 

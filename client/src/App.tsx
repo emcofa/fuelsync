@@ -1,6 +1,17 @@
-import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { setTokenProvider } from './lib/api';
+import AppRouter from './router';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => {
   const { getToken } = useAuth();
@@ -10,17 +21,9 @@ const App = () => {
   }, [getToken]);
 
   return (
-    <div className="p-8">
-      <SignedOut>
-        <SignInButton />
-      </SignedOut>
-      <SignedIn>
-        <div className="flex items-center gap-4">
-          <p className="text-green-600 font-medium">Ready to build</p>
-          <UserButton />
-        </div>
-      </SignedIn>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <AppRouter />
+    </QueryClientProvider>
   );
 };
 
