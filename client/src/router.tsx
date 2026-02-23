@@ -4,6 +4,7 @@ import Profile from './pages/Profile';
 import Goals from './pages/Goals';
 import FoodLog from './pages/FoodLog';
 import Dashboard from './pages/Dashboard';
+import Progress from './pages/Progress';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -53,6 +54,14 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <FoodLog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/progress"
+          element={
+            <ProtectedRoute>
+              <Progress />
             </ProtectedRoute>
           }
         />

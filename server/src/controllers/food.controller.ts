@@ -31,6 +31,20 @@ export const getDailyLog = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const getWeeklyLog = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const summaries = await foodService.getWeeklyLog(userId);
+    res.json(summaries);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const deleteEntry = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId } = getAuth(req);

@@ -19,6 +19,7 @@ const logFoodSchema = z.object({
 
 router.post('/log', requireAuth, validateBody(logFoodSchema), foodController.logFood);
 router.get('/log/today', requireAuth, foodController.getDailyLog);
+router.get('/log/week', requireAuth, foodController.getWeeklyLog);
 router.delete('/log/:id', requireAuth, foodController.deleteEntry);
 
 export default router;

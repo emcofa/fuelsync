@@ -94,6 +94,23 @@ export const getDailyLog = async (userId: string, dateStr?: string): Promise<Dai
   };
 };
 
+const DAYS_IN_WEEK = 7;
+
+export const getWeeklyLog = async (userId: string): Promise<DailyMacroSummary[]> => {
+  const today = new Date();
+  const summaries: DailyMacroSummary[] = [];
+
+  for (let i = DAYS_IN_WEEK - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const summary = await getDailyLog(userId, dateStr);
+    summaries.push(summary);
+  }
+
+  return summaries;
+};
+
 export const deleteEntry = async (userId: string, entryId: number): Promise<boolean> => {
   return foodQueries.deleteById(entryId, userId);
 };
