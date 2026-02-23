@@ -7,6 +7,7 @@ import userRoutes from './routes/user';
 import goalsRoutes from './routes/goals';
 import foodRoutes from './routes/food';
 import searchRoutes from './routes/search';
+import aiRoutes from './routes/ai';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/goals', goalsRoutes);
 app.use('/api/food', foodRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use(errorHandler);
 

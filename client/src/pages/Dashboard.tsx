@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import { queryKeys, type MealType } from '../types';
+import { queryKeys, type MealType, type UserProfile } from '../types';
 import { useDailyLog } from '../hooks/useDailyLog';
 import { useMacroTargets } from '../hooks/useMacroTargets';
 import CalorieBar from '../components/dashboard/CalorieBar';
 import MacroRing from '../components/dashboard/MacroRing';
 import MealSection from '../components/dashboard/MealSection';
+import AISuggestionPanel from '../components/ai/AISuggestionPanel';
 
 const MEAL_SECTIONS: { type: MealType; label: string }[] = [
   { type: 'breakfast', label: 'Breakfast' },
@@ -22,6 +23,10 @@ const Dashboard = () => {
 
   const { data: log, isLoading: logLoading, isError: logError } = useDailyLog(today);
   const { data: targets, isLoading: targetsLoading, isError: targetsError } = useMacroTargets();
+  const { data: profile } = useQuery({
+    queryKey: queryKeys.userProfile(),
+    queryFn: () => apiFetch<UserProfile>('/user/profile'),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (entryId: number) => {
@@ -110,6 +115,19 @@ const Dashboard = () => {
           />
         ))}
       </div>
+
+      {profile && (
+        <div className="mt-6">
+          <AISuggestionPanel
+            remainingCalories={Math.max(0, target.calories - consumed.calories)}
+            remainingProteinG={Math.max(0, target.proteinG - consumed.proteinG)}
+            remainingCarbsG={Math.max(0, target.carbsG - consumed.carbsG)}
+            remainingFatG={Math.max(0, target.fatG - consumed.fatG)}
+            goalMode={profile.goalType}
+            dietType={profile.dietType}
+          />
+        </div>
+      )}
     </main>
   );
 };
