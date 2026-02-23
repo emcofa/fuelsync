@@ -71,23 +71,15 @@ const Goals = () => {
   });
 
   if (isLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Loading goals...</p>
-      </main>
-    );
+    return <p className="py-12 text-center text-gray-500">Loading goals...</p>;
   }
 
   if (isError) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-red-500">Failed to load goals. Complete your profile first.</p>
-      </main>
-    );
+    return <p className="py-12 text-center text-red-500">Failed to load goals. Complete your profile first.</p>;
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
+    <>
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Goals</h1>
 
       <section className="mb-8">
@@ -145,7 +137,7 @@ const Goals = () => {
           )}
         </section>
       )}
-    </main>
+    </>
   );
 };
 

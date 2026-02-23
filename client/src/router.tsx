@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
+import Layout from './components/ui/Layout';
 import Profile from './pages/Profile';
 import Goals from './pages/Goals';
 import FoodLog from './pages/FoodLog';
@@ -25,7 +26,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/sign-in" />;
   }
 
-  return <>{children}</>;
+  return <Layout>{children}</Layout>;
 };
 
 const AppRouter = () => {

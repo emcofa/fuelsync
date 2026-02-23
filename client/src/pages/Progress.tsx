@@ -7,19 +7,11 @@ const Progress = () => {
   const { data: targets } = useMacroTargets();
 
   if (isLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Loading progress...</p>
-      </main>
-    );
+    return <p className="py-12 text-center text-gray-500">Loading progress...</p>;
   }
 
   if (isError || !weekData) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-red-500">Failed to load progress data.</p>
-      </main>
-    );
+    return <p className="py-12 text-center text-red-500">Failed to load progress data.</p>;
   }
 
   const avgCalories = weekData.length > 0
@@ -30,7 +22,7 @@ const Progress = () => {
     : 0;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
+    <>
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Progress</h1>
 
       <section className="mb-6 grid grid-cols-2 gap-4">
@@ -80,7 +72,7 @@ const Progress = () => {
           unit="g"
         />
       </div>
-    </main>
+    </>
   );
 };
 

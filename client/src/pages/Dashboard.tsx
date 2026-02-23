@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import { queryKeys, type MealType, type UserProfile } from '../types';
 import { useDailyLog } from '../hooks/useDailyLog';
@@ -40,20 +41,32 @@ const Dashboard = () => {
   });
 
   if (logLoading || targetsLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">Loading dashboard...</p>
-      </main>
-    );
+    return <p className="py-12 text-center text-gray-500">Loading dashboard...</p>;
   }
 
-  if (logError || targetsError) {
+  const needsSetup = targetsError || !targets;
+
+  if (logError && !needsSetup) {
+    return <p className="py-12 text-center text-red-500">Failed to load dashboard. Please try again.</p>;
+  }
+
+  if (needsSetup && !targetsLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-red-500">
-          Failed to load dashboard. Make sure your profile and goals are set up.
-        </p>
-      </main>
+      <>
+        <h1 className="mb-6 text-2xl font-bold text-gray-900">Dashboard</h1>
+        <section className="rounded-lg border border-gray-200 bg-white p-8 text-center shadow-sm">
+          <h2 className="mb-2 text-lg font-semibold text-gray-900">Welcome to FuelSync</h2>
+          <p className="mb-6 text-gray-600">
+            Set up your profile so we can calculate your daily macro targets.
+          </p>
+          <Link
+            to="/profile"
+            className="inline-block rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Set Up Profile
+          </Link>
+        </section>
+      </>
     );
   }
 
@@ -72,7 +85,7 @@ const Dashboard = () => {
   };
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
+    <>
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Dashboard</h1>
 
       <section className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -128,7 +141,7 @@ const Dashboard = () => {
           />
         </div>
       )}
-    </main>
+    </>
   );
 };
 

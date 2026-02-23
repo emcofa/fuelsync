@@ -1,6 +1,13 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let openaiInstance: OpenAI | null = null;
+
+const getOpenAI = (): OpenAI => {
+  if (!openaiInstance) {
+    openaiInstance = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return openaiInstance;
+};
 
 type AISuggestParams = {
   remainingCalories: number;
@@ -61,7 +68,7 @@ Format:
 }
 
 export const suggest = async (params: AISuggestParams): Promise<{ suggestions: AISuggestionItem[] }> => {
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     messages: [{ role: 'user', content: buildPrompt(params) }],
     temperature: 0.7,
