@@ -1,6 +1,14 @@
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
+import { useEffect } from 'react';
+import { setTokenProvider } from './lib/api';
 
 const App = () => {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    setTokenProvider(getToken);
+  }, [getToken]);
+
   return (
     <div className="p-8">
       <SignedOut>
@@ -8,7 +16,7 @@ const App = () => {
       </SignedOut>
       <SignedIn>
         <div className="flex items-center gap-4">
-          <p className="text-green-600 font-medium">Clerk is working</p>
+          <p className="text-green-600 font-medium">Ready to build</p>
           <UserButton />
         </div>
       </SignedIn>
