@@ -5,6 +5,8 @@ import { clerkMiddleware } from '@clerk/express';
 import { errorHandler } from './middleware/errorHandler';
 import userRoutes from './routes/user';
 import goalsRoutes from './routes/goals';
+import foodRoutes from './routes/food';
+import searchRoutes from './routes/search';
 
 dotenv.config();
 
@@ -22,6 +24,8 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/user', userRoutes);
 app.use('/api/goals', goalsRoutes);
+app.use('/api/food', foodRoutes);
+app.use('/api/search', searchRoutes);
 
 app.use(errorHandler);
 

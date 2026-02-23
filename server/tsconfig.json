@@ -12,5 +12,6 @@
     "moduleDetection": "force",
     "isolatedModules": true,
     "noUncheckedIndexedAccess": true
-  }
+  },
+  "include": ["src"]
 }

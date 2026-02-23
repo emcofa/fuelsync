@@ -43,6 +43,7 @@ export const create = async (params: CreateUserParams) => {
       id: params.id,
       email: params.email,
     })
+    .onDuplicateKeyUpdate({ email: params.email })
     .execute();
 };
 

@@ -1,0 +1,117 @@
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiFetch } from '../lib/api';
+import { queryKeys, type MealType } from '../types';
+import { useDailyLog } from '../hooks/useDailyLog';
+import { useMacroTargets } from '../hooks/useMacroTargets';
+import CalorieBar from '../components/dashboard/CalorieBar';
+import MacroRing from '../components/dashboard/MacroRing';
+import MealSection from '../components/dashboard/MealSection';
+
+const MEAL_SECTIONS: { type: MealType; label: string }[] = [
+  { type: 'breakfast', label: 'Breakfast' },
+  { type: 'lunch', label: 'Lunch' },
+  { type: 'dinner', label: 'Dinner' },
+  { type: 'snack', label: 'Snack' },
+];
+
+const Dashboard = () => {
+  const queryClient = useQueryClient();
+  const today = new Date().toISOString().slice(0, 10);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const { data: log, isLoading: logLoading, isError: logError } = useDailyLog(today);
+  const { data: targets, isLoading: targetsLoading, isError: targetsError } = useMacroTargets();
+
+  const deleteMutation = useMutation({
+    mutationFn: (entryId: number) => {
+      setDeletingId(entryId);
+      return apiFetch<{ success: boolean }>(`/food/log/${entryId}`, { method: 'DELETE' });
+    },
+    onSettled: () => {
+      setDeletingId(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dailyLog(today) });
+    },
+  });
+
+  if (logLoading || targetsLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">Loading dashboard...</p>
+      </main>
+    );
+  }
+
+  if (logError || targetsError) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-red-500">
+          Failed to load dashboard. Make sure your profile and goals are set up.
+        </p>
+      </main>
+    );
+  }
+
+  const consumed = {
+    calories: log?.totalCalories ?? 0,
+    proteinG: log?.totalProteinG ?? 0,
+    carbsG: log?.totalCarbsG ?? 0,
+    fatG: log?.totalFatG ?? 0,
+  };
+
+  const target = {
+    calories: targets?.calories ?? 0,
+    proteinG: targets?.proteinG ?? 0,
+    carbsG: targets?.carbsG ?? 0,
+    fatG: targets?.fatG ?? 0,
+  };
+
+  return (
+    <main className="mx-auto max-w-2xl px-4 py-8">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">Dashboard</h1>
+
+      <section className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <CalorieBar consumed={consumed.calories} target={target.calories} />
+
+        <div className="mt-6 flex justify-around">
+          <MacroRing
+            label="Protein"
+            consumed={consumed.proteinG}
+            target={target.proteinG}
+            unit="g"
+            color="#8b5cf6"
+          />
+          <MacroRing
+            label="Carbs"
+            consumed={consumed.carbsG}
+            target={target.carbsG}
+            unit="g"
+            color="#f59e0b"
+          />
+          <MacroRing
+            label="Fat"
+            consumed={consumed.fatG}
+            target={target.fatG}
+            unit="g"
+            color="#10b981"
+          />
+        </div>
+      </section>
+
+      <div className="space-y-4">
+        {MEAL_SECTIONS.map(({ type, label }) => (
+          <MealSection
+            key={type}
+            mealType={type}
+            label={label}
+            entries={log?.entries ?? []}
+            onDelete={(id) => deleteMutation.mutate(id)}
+            deletingId={deletingId}
+          />
+        ))}
+      </div>
+    </main>
+  );
+};
+
+export default Dashboard;

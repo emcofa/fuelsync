@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import Profile from './pages/Profile';
 import Goals from './pages/Goals';
+import FoodLog from './pages/FoodLog';
+import Dashboard from './pages/Dashboard';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -35,6 +37,22 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/food"
+          element={
+            <ProtectedRoute>
+              <FoodLog />
             </ProtectedRoute>
           }
         />
