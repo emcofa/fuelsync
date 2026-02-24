@@ -5,6 +5,7 @@ import { apiFetch } from '../lib/api';
 import { queryKeys, MEAL_LABELS, type MealType, type UserProfile } from '../types';
 import { useDailyLog } from '../hooks/useDailyLog';
 import { useMacroTargets } from '../hooks/useMacroTargets';
+import DateNavigator from '../components/dashboard/DateNavigator';
 import CalorieBar from '../components/dashboard/CalorieBar';
 import MacroRing from '../components/dashboard/MacroRing';
 import MealSection from '../components/dashboard/MealSection';
@@ -12,12 +13,16 @@ import AISuggestionPanel from '../components/ai/AISuggestionPanel';
 
 const MEAL_SECTIONS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+const formatDateParam = (date: Date): string =>
+  date.toISOString().split('T')[0];
+
 const Dashboard = () => {
   const queryClient = useQueryClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const dateStr = formatDateParam(selectedDate);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  const { data: log, isLoading: logLoading, isError: logError } = useDailyLog(today);
+  const { data: log, isLoading: logLoading, isError: logError } = useDailyLog(dateStr);
   const { data: targets, isLoading: targetsLoading, isError: targetsError } = useMacroTargets();
   const { data: profile } = useQuery({
     queryKey: queryKeys.userProfile(),
@@ -31,7 +36,7 @@ const Dashboard = () => {
     },
     onSettled: () => {
       setDeletingId(null);
-      queryClient.invalidateQueries({ queryKey: queryKeys.dailyLog(today) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dailyLog(dateStr) });
     },
   });
 
@@ -81,7 +86,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Dashboard</h1>
+      <DateNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
       <section className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <CalorieBar consumed={consumed.calories} target={target.calories} />
@@ -120,6 +125,7 @@ const Dashboard = () => {
             entries={log?.entries ?? []}
             onDelete={(id) => deleteMutation.mutate(id)}
             deletingId={deletingId}
+            date={dateStr}
           />
         ))}
       </div>

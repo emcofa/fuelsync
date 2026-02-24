@@ -26,6 +26,8 @@ const FoodLog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const mealParam = searchParams.get('meal');
   const mealType: MealType = isValidMealType(mealParam) ? mealParam : getDefaultMealType();
+  const dateParam = searchParams.get('date');
+  const logDate = dateParam ?? new Date().toISOString().split('T')[0];
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selected, setSelected] = useState<FoodSearchResult | null>(null);
@@ -50,11 +52,11 @@ const FoodLog = () => {
           fatPer100g: food.fatPer100g,
           servingG,
           mealType,
+          loggedAt: `${logDate}T12:00:00.000Z`,
         }),
       }),
     onSuccess: () => {
-      const today = new Date().toISOString().slice(0, 10);
-      queryClient.invalidateQueries({ queryKey: queryKeys.dailyLog(today) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dailyLog(logDate) });
       setSuccessMeal(`Added to ${MEAL_LABELS[mealType]}`);
       setTimeout(() => {
         setSelected(null);

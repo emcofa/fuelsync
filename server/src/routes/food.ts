@@ -15,6 +15,7 @@ const logFoodSchema = z.object({
   fatPer100g: z.number().min(0),
   servingG: z.number().min(1),
   mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
+  loggedAt: z.string().datetime().optional(),
 });
 
 router.post('/log', requireAuth, validateBody(logFoodSchema), foodController.logFood);

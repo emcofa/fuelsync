@@ -8,9 +8,10 @@ type MealSectionProps = {
   entries: FoodEntry[];
   onDelete: (id: number) => void;
   deletingId: number | null;
+  date: string;
 };
 
-const MealSection = ({ mealType, label, entries, onDelete, deletingId }: MealSectionProps) => {
+const MealSection = ({ mealType, label, entries, onDelete, deletingId, date }: MealSectionProps) => {
   const navigate = useNavigate();
   const filtered = entries.filter((e) => e.mealType === mealType);
   const totalCals = filtered.reduce((sum, e) => sum + e.calories, 0);
@@ -37,7 +38,7 @@ const MealSection = ({ mealType, label, entries, onDelete, deletingId }: MealSec
       )}
       <button
         type="button"
-        onClick={() => navigate(`/food?meal=${mealType}`)}
+        onClick={() => navigate(`/food?meal=${mealType}&date=${date}`)}
         className="mt-3 flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus:underline"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">

@@ -48,6 +48,7 @@ type LogFoodParams = {
   fatPer100g: number;
   servingG: number;
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  loggedAt?: string;
 };
 
 export const logFood = async (userId: string, params: LogFoodParams): Promise<FoodEntryResponse> => {
@@ -67,7 +68,7 @@ export const logFood = async (userId: string, params: LogFoodParams): Promise<Fo
     fat_g: fatG,
     serving_g: params.servingG,
     meal_type: params.mealType,
-    logged_at: new Date(),
+    logged_at: params.loggedAt ? new Date(params.loggedAt) : new Date(),
   });
 
   const entry = await foodQueries.findById(Number(insertId), userId);
