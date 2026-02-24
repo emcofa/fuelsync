@@ -13,6 +13,7 @@ export const db: Kysely<Database> = new Proxy({} as Kysely<Database>, {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
+        timezone: '+00:00',
       });
       instance = new Kysely<Database>({
         dialect: new MysqlDialect({ pool }),

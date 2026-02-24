@@ -8,14 +8,14 @@ const router = Router();
 
 const logFoodSchema = z.object({
   foodName: z.string().min(1),
-  barcode: z.string().optional(),
+  barcode: z.string().nullable().optional(),
   caloriesPer100g: z.number().min(0),
   proteinPer100g: z.number().min(0),
   carbsPer100g: z.number().min(0),
   fatPer100g: z.number().min(0),
   servingG: z.number().min(1),
   mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
-  loggedAt: z.string().datetime().optional(),
+  loggedAt: z.string().optional(),
 });
 
 router.post('/log', requireAuth, validateBody(logFoodSchema), foodController.logFood);

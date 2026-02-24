@@ -80,9 +80,10 @@ export const logFood = async (userId: string, params: LogFoodParams): Promise<Fo
 export const getDailyLog = async (userId: string, dateStr?: string): Promise<DailyMacroSummary> => {
   const date = dateStr ?? new Date().toISOString().slice(0, 10);
   const startUtc = new Date(`${date}T00:00:00.000Z`);
-  const endUtc = new Date(`${date}T23:59:59.999Z`);
+  const endOfDay = new Date(startUtc);
+  endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
 
-  const rows = await foodQueries.findByUserAndDateRange(userId, startUtc, endUtc);
+  const rows = await foodQueries.findByUserAndDateRange(userId, startUtc, endOfDay);
   const entries = rows.map(toResponse);
 
   return {

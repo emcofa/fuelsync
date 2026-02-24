@@ -52,7 +52,7 @@ const FoodLog = () => {
           fatPer100g: food.fatPer100g,
           servingG,
           mealType,
-          loggedAt: `${logDate}T12:00:00.000Z`,
+          loggedAt: `${logDate}T12:00:00Z`,
         }),
       }),
     onSuccess: () => {
