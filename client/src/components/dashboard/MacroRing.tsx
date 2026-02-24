@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 type MacroRingProps = {
   label: string;
   consumed: number;
@@ -6,15 +8,20 @@ type MacroRingProps = {
   color: string;
 };
 
-const RING_SIZE = 80;
-const STROKE_WIDTH = 6;
+const RING_SIZE = 60;
+const STROKE_WIDTH = 5;
 const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 const MacroRing = ({ label, consumed, target, unit, color }: MacroRingProps) => {
+  const [animated, setAnimated] = useState(false);
   const percentage = target > 0 ? Math.min(consumed / target, 1) : 0;
-  const offset = CIRCUMFERENCE * (1 - percentage);
-  const remaining = Math.max(target - consumed, 0);
+  const targetOffset = CIRCUMFERENCE * (1 - percentage);
+
+  useEffect(() => {
+    const id = setTimeout(() => setAnimated(true), 0);
+    return () => clearTimeout(id);
+  }, []);
 
   return (
     <div className="flex flex-col items-center">
@@ -35,13 +42,16 @@ const MacroRing = ({ label, consumed, target, unit, color }: MacroRingProps) => 
           stroke={color}
           strokeWidth={STROKE_WIDTH}
           strokeDasharray={CIRCUMFERENCE}
-          strokeDashoffset={offset}
           strokeLinecap="round"
+          style={{
+            strokeDashoffset: animated ? targetOffset : CIRCUMFERENCE,
+            transition: 'stroke-dashoffset 0.8s ease-out',
+          }}
         />
       </svg>
-      <p className="mt-1 text-xs font-semibold text-gray-800">{label}</p>
-      <p className="text-xs text-gray-500">
-        {Math.round(remaining)}{unit} left
+      <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-700">{label}</p>
+      <p className="text-xs text-gray-400">
+        {Math.round(consumed)}{unit} / {Math.round(target)}{unit}
       </p>
     </div>
   );

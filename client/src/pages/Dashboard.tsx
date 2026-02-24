@@ -93,10 +93,10 @@ const Dashboard = () => {
     <>
       <DateNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
-      <section className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <section className="mb-6">
         <CalorieBar consumed={consumed.calories} target={target.calories} />
 
-        <div className="mt-6 flex justify-around">
+        <div className="mt-4 flex justify-around rounded-xl border border-gray-200 bg-white px-4 py-5 shadow-sm">
           <Tooltip
             content={
               <div className="space-y-1 text-xs">
