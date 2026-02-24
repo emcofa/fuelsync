@@ -17,6 +17,13 @@ export type DietType =
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
+export const MEAL_LABELS: Record<MealType, string> = {
+  breakfast: 'Breakfast',
+  lunch: 'Lunch',
+  dinner: 'Dinner',
+  snack: 'Snack',
+};
+
 export type UserProfile = {
   id: string;
   email: string;

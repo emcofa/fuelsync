@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
-import { queryKeys, type MealType, type UserProfile } from '../types';
+import { queryKeys, MEAL_LABELS, type MealType, type UserProfile } from '../types';
 import { useDailyLog } from '../hooks/useDailyLog';
 import { useMacroTargets } from '../hooks/useMacroTargets';
 import CalorieBar from '../components/dashboard/CalorieBar';
@@ -10,12 +10,7 @@ import MacroRing from '../components/dashboard/MacroRing';
 import MealSection from '../components/dashboard/MealSection';
 import AISuggestionPanel from '../components/ai/AISuggestionPanel';
 
-const MEAL_SECTIONS: { type: MealType; label: string }[] = [
-  { type: 'breakfast', label: 'Breakfast' },
-  { type: 'lunch', label: 'Lunch' },
-  { type: 'dinner', label: 'Dinner' },
-  { type: 'snack', label: 'Snack' },
-];
+const MEAL_SECTIONS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 const Dashboard = () => {
   const queryClient = useQueryClient();
@@ -117,11 +112,11 @@ const Dashboard = () => {
       </section>
 
       <div className="space-y-4">
-        {MEAL_SECTIONS.map(({ type, label }) => (
+        {MEAL_SECTIONS.map((type) => (
           <MealSection
             key={type}
             mealType={type}
-            label={label}
+            label={MEAL_LABELS[type]}
             entries={log?.entries ?? []}
             onDelete={(id) => deleteMutation.mutate(id)}
             deletingId={deletingId}

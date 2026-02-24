@@ -1,30 +1,41 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../lib/api';
-import { queryKeys, type FoodSearchResult, type FoodEntry, type MealType } from '../types';
+import { queryKeys, MEAL_LABELS, type FoodSearchResult, type FoodEntry, type MealType } from '../types';
 import { useFoodSearch } from '../hooks/useFoodSearch';
 import FoodSearchBar from '../components/food/FoodSearchBar';
 import FoodCard from '../components/food/FoodCard';
 import BarcodeScanner from '../components/food/BarcodeScanner';
 
-const MEAL_TYPES: { value: MealType; label: string }[] = [
-  { value: 'breakfast', label: 'Breakfast' },
-  { value: 'lunch', label: 'Lunch' },
-  { value: 'dinner', label: 'Dinner' },
-  { value: 'snack', label: 'Snack' },
-];
+const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+const getDefaultMealType = (): MealType => {
+  const hour = new Date().getHours();
+  if (hour < 10) return 'breakfast';
+  if (hour < 13) return 'lunch';
+  if (hour < 17) return 'snack';
+  return 'dinner';
+};
+
+const isValidMealType = (value: string | null): value is MealType =>
+  value === 'breakfast' || value === 'lunch' || value === 'dinner' || value === 'snack';
 
 const FoodLog = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mealParam = searchParams.get('meal');
+  const mealType: MealType = isValidMealType(mealParam) ? mealParam : getDefaultMealType();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selected, setSelected] = useState<FoodSearchResult | null>(null);
   const [servingG, setServingG] = useState(100);
-  const [mealType, setMealType] = useState<MealType>('lunch');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [barcodeLoading, setBarcodeLoading] = useState(false);
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
+  const [successMeal, setSuccessMeal] = useState<string | null>(null);
 
-  const { data: results, isLoading: isSearching, isError: searchError } = useFoodSearch(searchQuery);
+  const { data: results, isLoading: isSearching, isFetching, isError: searchError } = useFoodSearch(searchQuery);
 
   const logMutation = useMutation({
     mutationFn: (food: FoodSearchResult) =>
@@ -44,11 +55,19 @@ const FoodLog = () => {
     onSuccess: () => {
       const today = new Date().toISOString().slice(0, 10);
       queryClient.invalidateQueries({ queryKey: queryKeys.dailyLog(today) });
-      setSelected(null);
-      setServingG(100);
-      setSearchQuery('');
+      setSuccessMeal(`Added to ${MEAL_LABELS[mealType]}`);
+      setTimeout(() => {
+        setSelected(null);
+        setServingG(100);
+        setSearchQuery('');
+        setSuccessMeal(null);
+      }, 1500);
     },
   });
+
+  const handleMealChange = (meal: MealType) => {
+    setSearchParams({ meal });
+  };
 
   const handleSelect = (food: FoodSearchResult) => {
     setSelected(food);
@@ -78,11 +97,29 @@ const FoodLog = () => {
 
   return (
     <>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Log Food</h1>
+      <h1 className="mb-4 text-2xl font-bold text-gray-900">Log Food</h1>
+
+      {/* Meal tabs */}
+      <nav className="mb-6 flex gap-1 rounded-lg bg-gray-100 p-1" aria-label="Select meal">
+        {MEAL_TYPES.map((mt) => (
+          <button
+            key={mt}
+            type="button"
+            onClick={() => handleMealChange(mt)}
+            className={
+              mt === mealType
+                ? 'flex-1 rounded-md bg-white px-3 py-2 text-sm font-medium text-indigo-700 shadow-sm'
+                : 'flex-1 rounded-md px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700'
+            }
+          >
+            {MEAL_LABELS[mt]}
+          </button>
+        ))}
+      </nav>
 
       <div className="flex gap-2">
         <div className="flex-1">
-          <FoodSearchBar onSearch={setSearchQuery} />
+          <FoodSearchBar onSearch={setSearchQuery} isLoading={isFetching} />
         </div>
         <button
           type="button"
@@ -123,49 +160,29 @@ const FoodLog = () => {
         <section className="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-gray-900">{selected.name}</h2>
 
-          <div className="mb-4 grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="serving" className="mb-1 block text-sm font-medium text-gray-700">
-                Serving size (g)
-              </label>
-              <input
-                id="serving"
-                type="number"
-                min={1}
-                value={servingG}
-                onChange={(e) => setServingG(Number(e.target.value) || 1)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="meal-type" className="mb-1 block text-sm font-medium text-gray-700">
-                Meal
-              </label>
-              <select
-                id="meal-type"
-                value={mealType}
-                onChange={(e) => setMealType(e.target.value as MealType)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              >
-                {MEAL_TYPES.map((mt) => (
-                  <option key={mt.value} value={mt.value}>
-                    {mt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="mb-4">
+            <label htmlFor="serving" className="mb-1 block text-sm font-medium text-gray-700">
+              Serving size (g)
+            </label>
+            <input
+              id="serving"
+              type="number"
+              min={1}
+              value={servingG}
+              onChange={(e) => setServingG(Number(e.target.value) || 1)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-40"
+            />
           </div>
 
           <div className="mb-4 rounded-md bg-gray-50 px-4 py-3">
             <p className="text-sm font-medium text-gray-700">
-              Estimated for {servingG}g serving:
+              Estimated for {servingG}g:
             </p>
             <p className="mt-1 text-sm text-gray-600">
               {Math.round(selected.caloriesPer100g * factor)} kcal &middot; P{' '}
-              {(selected.proteinPer100g * factor).toFixed(1)}g &middot; C{' '}
-              {(selected.carbsPer100g * factor).toFixed(1)}g &middot; F{' '}
-              {(selected.fatPer100g * factor).toFixed(1)}g
+              {Math.round(selected.proteinPer100g * factor)}g &middot; C{' '}
+              {Math.round(selected.carbsPer100g * factor)}g &middot; F{' '}
+              {Math.round(selected.fatPer100g * factor)}g
             </p>
           </div>
 
@@ -173,10 +190,10 @@ const FoodLog = () => {
             <button
               type="button"
               onClick={handleLog}
-              disabled={logMutation.isPending}
+              disabled={logMutation.isPending || !!successMeal}
               className="rounded-md bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {logMutation.isPending ? 'Logging...' : 'Log Food'}
+              {logMutation.isPending ? 'Logging...' : `Log to ${MEAL_LABELS[mealType]}`}
             </button>
             <button
               type="button"
@@ -187,8 +204,8 @@ const FoodLog = () => {
             </button>
           </div>
 
-          {logMutation.isSuccess && (
-            <p className="mt-3 text-sm text-green-600">Food logged successfully.</p>
+          {successMeal && (
+            <p className="mt-3 text-sm font-medium text-green-600">{successMeal} ✓</p>
           )}
           {logMutation.isError && (
             <p className="mt-3 text-sm text-red-600">Failed to log food. Please try again.</p>
