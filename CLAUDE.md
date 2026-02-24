@@ -332,6 +332,204 @@ Do not jump ahead. Each phase depends on the previous.
 
 ## Current Build Status
 
+### Phase 1 — Complete (all 15 steps)
+
+All core features are built and functional.
+
+### Phase 2 — Complete (all 9 steps)
+
+| Step | Feature | Status |
+|------|---------|--------|
+| 1 | Database migrations (user_favorites, custom_foods) | Done |
+| 2 | Meal calorie recommendations | Done |
+| 3 | Macro tooltips on Dashboard | Done |
+| 4 | Edit logged food (PUT /api/food/log/:id + EditFoodModal) | Done |
+| 5 | Recently added foods (GET /api/food/recent + QuickFoodCard) | Done |
+| 6 | Quick tabs in FoodLog (Recent / Favorites / This meal) | Done |
+| 7 | Favorites (GET/POST/DELETE /api/favorites + heart toggle) | Done |
+| 8 | Portion size improvements (defaultServingG, serving context) | Done |
+| 9 | Manual food entry (POST /api/search/custom + AddCustomFoodModal + merge in search) | Done |
+
+### Post-Phase 2 improvements
+
+- Search bar pinned directly under meal tabs (no longer shifts with quick tabs)
+- Favorite toggle (heart icon) available on QuickFoodCard, EditFoodModal, and FoodCard
+- Shared `useFavoriteToggle` hook extracted to avoid duplication
+
+---
+
+### File Inventory
+
+#### Migrations (`server/migrations/`)
+
+| File | Description |
+|------|-------------|
+| `001_create_users.sql` | Users table with profile fields |
+| `002_create_macro_targets.sql` | Macro targets table (calories, protein, carbs, fat) |
+| `003_create_food_entries.sql` | Food log entries table |
+| `004_create_custom_foods.sql` | User-created custom foods table |
+| `005_create_user_favorites.sql` | User favorites table with unique constraint |
+| `006_add_default_serving_to_custom_foods.sql` | Adds default_serving_g column to custom_foods |
+
+#### Server — Database (`server/src/db/`)
+
+| File | Description |
+|------|-------------|
+| `connection.ts` | MySQL2 pool + Kysely instance (UTC timezone) |
+| `types.ts` | Kysely Database interface for all tables |
+| `queries/user.queries.ts` | User upsert and profile queries |
+| `queries/goals.queries.ts` | Macro target queries |
+| `queries/food.queries.ts` | Food log CRUD, recent foods, and update queries |
+| `queries/customFoods.queries.ts` | Custom food insert and search queries |
+| `queries/favorites.queries.ts` | Favorites CRUD queries |
+
+#### Server — Middleware (`server/src/middleware/`)
+
+| File | Description |
+|------|-------------|
+| `errorHandler.ts` | Global Express error handler |
+| `requireAuth.ts` | Clerk auth + lazy user sync middleware |
+| `validateBody.ts` | Zod request body validation middleware |
+
+#### Server — Routes (`server/src/routes/`)
+
+| File | Description |
+|------|-------------|
+| `user.ts` | GET/PUT /api/user profile routes |
+| `goals.ts` | GET/PUT /api/goals macro target routes |
+| `food.ts` | POST/PUT/DELETE /api/food/log, GET /api/food/recent |
+| `search.ts` | GET /api/search/food, GET /api/search/barcode/:code, POST /api/search/custom |
+| `favorites.ts` | GET/POST/DELETE /api/favorites |
+| `ai.ts` | POST /api/ai/suggest |
+
+#### Server — Controllers (`server/src/controllers/`)
+
+| File | Description |
+|------|-------------|
+| `user.controller.ts` | User profile request handling |
+| `goals.controller.ts` | Macro targets request handling |
+| `food.controller.ts` | Food log, update, delete, recent foods handling |
+| `search.controller.ts` | Food search, barcode lookup, custom food creation |
+| `favorites.controller.ts` | Favorites CRUD with 409 duplicate handling |
+| `ai.controller.ts` | AI meal suggestion request handling |
+
+#### Server — Services (`server/src/services/`)
+
+| File | Description |
+|------|-------------|
+| `user.service.ts` | User sync and profile update logic |
+| `goals.service.ts` | Macro target calculation and override logic |
+| `food.service.ts` | Food logging, editing, deletion, daily/weekly queries |
+| `search.service.ts` | Livsmedelsverket + Open Food Facts search, barcode, custom food merge |
+| `favorites.service.ts` | Favorites business logic with duplicate check |
+| `ai.service.ts` | OpenAI GPT-4o meal suggestion generation |
+
+#### Server — Lib (`server/src/lib/`)
+
+| File | Description |
+|------|-------------|
+| `tdee.ts` | TDEE and macro target calculations (authoritative source) |
+
+#### Server — Entry (`server/src/`)
+
+| File | Description |
+|------|-------------|
+| `index.ts` | Express app setup, middleware, route registration |
+
+#### Client — Types (`client/src/types/`)
+
+| File | Description |
+|------|-------------|
+| `index.ts` | All shared types, query keys, and MEAL_LABELS constant |
+
+#### Client — Lib (`client/src/lib/`)
+
+| File | Description |
+|------|-------------|
+| `api.ts` | apiFetch wrapper with Clerk token injection |
+| `tdee.ts` | Client-side TDEE mirror for real-time UI preview |
+| `validators.ts` | Zod schemas for form validation |
+| `mealRecommendations.ts` | Meal calorie range calculator (frontend only) |
+
+#### Client — Hooks (`client/src/hooks/`)
+
+| File | Description |
+|------|-------------|
+| `useDailyLog.ts` | TanStack Query hook for daily food log |
+| `useFoodSearch.ts` | Debounced food search with TanStack Query |
+| `useMacroTargets.ts` | TanStack Query hook for macro targets |
+| `useWeeklyProgress.ts` | TanStack Query hook for weekly chart data |
+| `useAISuggestion.ts` | TanStack Query mutation for AI suggestions |
+| `useRecentFoods.ts` | TanStack Query hook for recently logged foods |
+| `useFavorites.ts` | TanStack Query hook for user favorites list |
+| `useFavoriteToggle.ts` | Shared hook for add/remove favorite toggle logic |
+
+#### Client — Pages (`client/src/pages/`)
+
+| File | Description |
+|------|-------------|
+| `Dashboard.tsx` | Main dashboard with calorie bar, macro rings, meal sections, date nav |
+| `FoodLog.tsx` | Food search, quick tabs, barcode scan, serving selection, logging |
+| `Goals.tsx` | Goal mode selector and macro target editor |
+| `Profile.tsx` | User profile form (body stats, activity level, diet type) |
+| `Progress.tsx` | Weekly calorie/macro charts (Recharts) |
+
+#### Client — Components: UI (`client/src/components/ui/`)
+
+| File | Description |
+|------|-------------|
+| `Navbar.tsx` | Top nav bar (desktop) / bottom tab bar (mobile) |
+| `Layout.tsx` | Shared layout wrapper with Navbar and main content area |
+| `Tooltip.tsx` | Hover tooltip component for macro ring details |
+
+#### Client — Components: Dashboard (`client/src/components/dashboard/`)
+
+| File | Description |
+|------|-------------|
+| `CalorieBar.tsx` | Horizontal calorie progress bar |
+| `MacroRing.tsx` | Circular progress ring for a single macro |
+| `MealSection.tsx` | Expandable meal section with entries, edit modal, add link |
+| `DateNavigator.tsx` | Date arrows and clickable date label with calendar |
+| `MiniCalendar.tsx` | Month grid calendar dropdown for date selection |
+| `WeeklyChart.tsx` | Recharts bar chart for weekly progress |
+
+#### Client — Components: Food (`client/src/components/food/`)
+
+| File | Description |
+|------|-------------|
+| `FoodSearchBar.tsx` | Search input with loading indicator |
+| `FoodCard.tsx` | Search result card with image, macros, and favorite heart toggle |
+| `QuickFoodCard.tsx` | Compact food card for quick tabs with optional favorite toggle |
+| `FoodLogItem.tsx` | Single food entry row with edit and delete actions |
+| `BarcodeScanner.tsx` | Camera-based barcode scanner component |
+| `AddCustomFoodModal.tsx` | Modal form for creating custom foods (react-hook-form + zod) |
+| `EditFoodModal.tsx` | Modal for editing serving size and meal type with favorite toggle |
+
+#### Client — Components: Goals (`client/src/components/goals/`)
+
+| File | Description |
+|------|-------------|
+| `GoalModeCard.tsx` | Goal mode selection card (cut/bulk/maintain) |
+| `MacroEditor.tsx` | Editable macro target inputs with custom override |
+
+#### Client — Components: AI (`client/src/components/ai/`)
+
+| File | Description |
+|------|-------------|
+| `AISuggestionPanel.tsx` | AI meal suggestion display and trigger panel |
+
+#### Client — App Shell (`client/src/`)
+
+| File | Description |
+|------|-------------|
+| `main.tsx` | React entry point with Clerk provider |
+| `App.tsx` | Root app component with QueryClientProvider |
+| `router.tsx` | React Router routes with ProtectedRoute + Layout wrapping |
+
+---
+
+## Current Build Status
+
 All 15 build phases are complete. Below is every file created or modified, with a one-line description.
 
 ### Server — `server/src/`

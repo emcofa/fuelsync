@@ -113,6 +113,60 @@ export const getWeeklyLog = async (userId: string): Promise<DailyMacroSummary[]>
   return summaries;
 };
 
+type UpdateFoodEntryParams = {
+  servingG: number;
+  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+};
+
+export const updateFoodEntry = async (
+  userId: string,
+  entryId: number,
+  input: UpdateFoodEntryParams
+): Promise<FoodEntryResponse> => {
+  const existing = await foodQueries.findById(entryId, userId);
+  if (!existing) throw new Error('Food entry not found');
+
+  const factor = input.servingG / Number(existing.serving_g);
+  const updated = {
+    serving_g: input.servingG,
+    calories: Math.round(existing.calories * factor),
+    protein_g: Number((Number(existing.protein_g) * factor).toFixed(2)),
+    carbs_g: Number((Number(existing.carbs_g) * factor).toFixed(2)),
+    fat_g: Number((Number(existing.fat_g) * factor).toFixed(2)),
+    meal_type: input.mealType ?? existing.meal_type,
+  };
+
+  const entry = await foodQueries.updateEntry(entryId, userId, updated);
+  if (!entry) throw new Error('Failed to retrieve updated food entry');
+
+  return toResponse(entry);
+};
+
+type RecentFoodResponse = {
+  foodName: string;
+  barcode: string | null;
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  servingG: number;
+  logCount: number;
+};
+
+export const getRecentFoods = async (userId: string): Promise<RecentFoodResponse[]> => {
+  const rows = await foodQueries.findRecentByUser(userId);
+  return rows.map((row) => ({
+    foodName: row.food_name,
+    barcode: row.barcode,
+    calories: row.calories,
+    proteinG: Number(row.protein_g),
+    carbsG: Number(row.carbs_g),
+    fatG: Number(row.fat_g),
+    servingG: Number(row.serving_g),
+    logCount: Number(row.log_count),
+  }));
+};
+
 export const deleteEntry = async (userId: string, entryId: number): Promise<boolean> => {
   return foodQueries.deleteById(entryId, userId);
 };

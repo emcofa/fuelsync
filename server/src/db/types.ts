@@ -5,6 +5,7 @@ export type Database = {
   macro_targets: MacroTargetsTable;
   food_entries: FoodEntriesTable;
   custom_foods: CustomFoodsTable;
+  user_favorites: UserFavoritesTable;
 };
 
 type UsersTable = {
@@ -59,5 +60,20 @@ type CustomFoodsTable = {
   protein_per_100g: number;
   carbs_per_100g: number;
   fat_per_100g: number;
+  default_serving_g: number | null;
+  created_at: ColumnType<Date, never, never>;
+};
+
+type UserFavoritesTable = {
+  id: Generated<number>;
+  user_id: string;
+  food_name: string;
+  barcode: string | null;
+  calories_per_100g: number;
+  protein_per_100g: number;
+  carbs_per_100g: number;
+  fat_per_100g: number;
+  default_serving_g: number | null;
+  source: string;
   created_at: ColumnType<Date, never, never>;
 };

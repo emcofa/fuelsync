@@ -1,3 +1,5 @@
+import * as customFoodsQueries from '../db/queries/customFoods.queries';
+
 const LIVSMEDELSVERKET_BASE = 'https://dataportal.livsmedelsverket.se/livsmedel/api/v1';
 const LIVSMEDELSVERKET_PAGE_SIZE = 500;
 
@@ -41,6 +43,7 @@ type OpenFoodFactsProduct = {
   code?: string;
   nutriments?: OpenFoodFactsNutriments;
   image_url?: string;
+  serving_quantity?: number;
 };
 
 // --- Shared result type ---
@@ -54,6 +57,7 @@ type FoodSearchResult = {
   fatPer100g: number;
   imageUrl: string | null;
   source: 'livsmedelsverket' | 'open_food_facts' | 'custom';
+  defaultServingG: number | null;
 };
 
 // --- Livsmedelsverket cache ---
@@ -136,19 +140,26 @@ const normalizeLivsmedelsverket = (
     fatPer100g: getVal('FAT'),
     imageUrl: null,
     source: 'livsmedelsverket',
+    defaultServingG: null,
   };
 };
 
-const normalizeOpenFoodFacts = (product: OpenFoodFactsProduct): FoodSearchResult => ({
-  name: product.product_name ?? 'Unknown',
-  barcode: product.code ?? null,
-  caloriesPer100g: product.nutriments?.['energy-kcal_100g'] ?? 0,
-  proteinPer100g: product.nutriments?.proteins_100g ?? 0,
-  carbsPer100g: product.nutriments?.carbohydrates_100g ?? 0,
-  fatPer100g: product.nutriments?.fat_100g ?? 0,
-  imageUrl: product.image_url ?? null,
-  source: 'open_food_facts',
-});
+const normalizeOpenFoodFacts = (product: OpenFoodFactsProduct): FoodSearchResult => {
+  const servingQty = product.serving_quantity;
+  const defaultServingG = servingQty && servingQty > 0 ? servingQty : null;
+
+  return {
+    name: product.product_name ?? 'Unknown',
+    barcode: product.code ?? null,
+    caloriesPer100g: product.nutriments?.['energy-kcal_100g'] ?? 0,
+    proteinPer100g: product.nutriments?.proteins_100g ?? 0,
+    carbsPer100g: product.nutriments?.carbohydrates_100g ?? 0,
+    fatPer100g: product.nutriments?.fat_100g ?? 0,
+    imageUrl: product.image_url ?? null,
+    source: 'open_food_facts',
+    defaultServingG,
+  };
+};
 
 // --- Open Food Facts search (Sweden-filtered fallback) ---
 
@@ -161,7 +172,7 @@ const searchOpenFoodFacts = async (query: string): Promise<FoodSearchResult[]> =
   url.searchParams.set('search_simple', '1');
   url.searchParams.set('action', 'process');
   url.searchParams.set('json', '1');
-  url.searchParams.set('fields', 'product_name,code,nutriments,image_url');
+  url.searchParams.set('fields', 'product_name,code,nutriments,image_url,serving_quantity');
   url.searchParams.set('page_size', '15');
   url.searchParams.set('lc', 'sv');
 
@@ -178,7 +189,22 @@ const searchOpenFoodFacts = async (query: string): Promise<FoodSearchResult[]> =
 
 // --- Public API ---
 
-export const searchFood = async (query: string): Promise<FoodSearchResult[]> => {
+const searchCustomFoods = async (userId: string, query: string): Promise<FoodSearchResult[]> => {
+  const rows = await customFoodsQueries.searchByUser(userId, query);
+  return rows.map((row) => ({
+    name: row.name,
+    barcode: null,
+    caloriesPer100g: row.calories_per_100g,
+    proteinPer100g: row.protein_per_100g,
+    carbsPer100g: row.carbs_per_100g,
+    fatPer100g: row.fat_per_100g,
+    imageUrl: null,
+    source: 'custom' as const,
+    defaultServingG: row.default_serving_g,
+  }));
+};
+
+const searchExternalFoods = async (query: string): Promise<FoodSearchResult[]> => {
   // Primary: Livsmedelsverket (cached local search + parallel nutrient fetches)
   try {
     const allItems = await getAllLivsmedel();
@@ -216,6 +242,40 @@ export const searchFood = async (query: string): Promise<FoodSearchResult[]> => 
     console.error('Open Food Facts search also failed:', err);
     return [];
   }
+};
+
+export const searchFood = async (query: string, userId: string): Promise<FoodSearchResult[]> => {
+  const [customFoods, apiResults] = await Promise.all([
+    searchCustomFoods(userId, query),
+    searchExternalFoods(query),
+  ]);
+  return [...customFoods, ...apiResults].slice(0, 15);
+};
+
+export const createCustomFood = async (
+  userId: string,
+  data: {
+    name: string;
+    caloriesPer100g: number;
+    proteinPer100g: number;
+    carbsPer100g: number;
+    fatPer100g: number;
+    defaultServingG?: number;
+  },
+): Promise<FoodSearchResult> => {
+  const defaultServingG = data.defaultServingG ?? null;
+  await customFoodsQueries.insert(userId, { ...data, defaultServingG });
+  return {
+    name: data.name,
+    barcode: null,
+    caloriesPer100g: data.caloriesPer100g,
+    proteinPer100g: data.proteinPer100g,
+    carbsPer100g: data.carbsPer100g,
+    fatPer100g: data.fatPer100g,
+    imageUrl: null,
+    source: 'custom',
+    defaultServingG,
+  };
 };
 
 export const searchBarcode = async (code: string): Promise<FoodSearchResult | null> => {

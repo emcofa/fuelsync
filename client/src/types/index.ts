@@ -71,7 +71,8 @@ export type FoodSearchResult = {
   carbsPer100g: number;
   fatPer100g: number;
   imageUrl: string | null;
-  source: 'open_food_facts' | 'custom';
+  source: 'livsmedelsverket' | 'open_food_facts' | 'custom';
+  defaultServingG: number | null;
 };
 
 export type DailyMacroSummary = {
@@ -81,6 +82,29 @@ export type DailyMacroSummary = {
   totalCarbsG: number;
   totalFatG: number;
   entries: FoodEntry[];
+};
+
+export type FavoriteFood = {
+  id: number;
+  foodName: string;
+  barcode: string | null;
+  caloriesPer100g: number;
+  proteinPer100g: number;
+  carbsPer100g: number;
+  fatPer100g: number;
+  defaultServingG: number | null;
+  source: string;
+};
+
+export type RecentFood = {
+  foodName: string;
+  barcode: string | null;
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  servingG: number;
+  logCount: number;
 };
 
 export type AISuggestion = {
@@ -100,4 +124,6 @@ export const queryKeys = {
   macroTargets: () => ['macro-targets'] as const,
   userProfile: () => ['user-profile'] as const,
   foodSearch: (query: string) => ['food-search', query] as const,
+  recentFoods: () => ['recent-foods'] as const,
+  favorites: () => ['favorites'] as const,
 };

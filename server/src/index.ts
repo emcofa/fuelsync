@@ -8,6 +8,7 @@ import goalsRoutes from './routes/goals';
 import foodRoutes from './routes/food';
 import searchRoutes from './routes/search';
 import aiRoutes from './routes/ai';
+import favoritesRoutes from './routes/favorites';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use('/api/goals', goalsRoutes);
 app.use('/api/food', foodRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 app.use(errorHandler);
 

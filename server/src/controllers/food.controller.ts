@@ -45,6 +45,43 @@ export const getWeeklyLog = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+export const updateFoodEntry = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const entryId = Number(req.params.id);
+    if (isNaN(entryId)) {
+      res.status(400).json({ error: 'Invalid entry ID' });
+      return;
+    }
+    const entry = await foodService.updateFoodEntry(userId, entryId, req.body);
+    res.json(entry);
+  } catch (err) {
+    if (err instanceof Error && err.message === 'Food entry not found') {
+      res.status(404).json({ error: 'Food entry not found' });
+      return;
+    }
+    next(err);
+  }
+};
+
+export const getRecentFoods = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const recent = await foodService.getRecentFoods(userId);
+    res.json(recent);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const deleteEntry = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId } = getAuth(req);

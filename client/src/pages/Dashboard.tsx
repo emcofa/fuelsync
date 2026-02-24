@@ -9,6 +9,7 @@ import DateNavigator from '../components/dashboard/DateNavigator';
 import CalorieBar from '../components/dashboard/CalorieBar';
 import MacroRing from '../components/dashboard/MacroRing';
 import MealSection from '../components/dashboard/MealSection';
+import Tooltip from '../components/ui/Tooltip';
 import AISuggestionPanel from '../components/ai/AISuggestionPanel';
 
 const MEAL_SECTIONS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -96,27 +97,63 @@ const Dashboard = () => {
         <CalorieBar consumed={consumed.calories} target={target.calories} />
 
         <div className="mt-6 flex justify-around">
-          <MacroRing
-            label="Protein"
-            consumed={consumed.proteinG}
-            target={target.proteinG}
-            unit="g"
-            color="#8b5cf6"
-          />
-          <MacroRing
-            label="Carbs"
-            consumed={consumed.carbsG}
-            target={target.carbsG}
-            unit="g"
-            color="#f59e0b"
-          />
-          <MacroRing
-            label="Fat"
-            consumed={consumed.fatG}
-            target={target.fatG}
-            unit="g"
-            color="#10b981"
-          />
+          <Tooltip
+            content={
+              <div className="space-y-1 text-xs">
+                <p>Target: {Math.round(target.proteinG)}g</p>
+                <p>Consumed: {Math.round(consumed.proteinG)}g</p>
+                <p>Remaining: {Math.round(Math.max(0, target.proteinG - consumed.proteinG))}g</p>
+                <p className="pt-1 text-gray-300">Protein builds and preserves muscle mass.</p>
+                <p className="text-gray-300">4 kcal per gram.</p>
+              </div>
+            }
+          >
+            <MacroRing
+              label="Protein"
+              consumed={consumed.proteinG}
+              target={target.proteinG}
+              unit="g"
+              color="#8b5cf6"
+            />
+          </Tooltip>
+          <Tooltip
+            content={
+              <div className="space-y-1 text-xs">
+                <p>Target: {Math.round(target.carbsG)}g</p>
+                <p>Consumed: {Math.round(consumed.carbsG)}g</p>
+                <p>Remaining: {Math.round(Math.max(0, target.carbsG - consumed.carbsG))}g</p>
+                <p className="pt-1 text-gray-300">Carbs are the body's primary energy source.</p>
+                <p className="text-gray-300">4 kcal per gram.</p>
+              </div>
+            }
+          >
+            <MacroRing
+              label="Carbs"
+              consumed={consumed.carbsG}
+              target={target.carbsG}
+              unit="g"
+              color="#f59e0b"
+            />
+          </Tooltip>
+          <Tooltip
+            content={
+              <div className="space-y-1 text-xs">
+                <p>Target: {Math.round(target.fatG)}g</p>
+                <p>Consumed: {Math.round(consumed.fatG)}g</p>
+                <p>Remaining: {Math.round(Math.max(0, target.fatG - consumed.fatG))}g</p>
+                <p className="pt-1 text-gray-300">Fat is important for hormones and cell health.</p>
+                <p className="text-gray-300">9 kcal per gram.</p>
+              </div>
+            }
+          >
+            <MacroRing
+              label="Fat"
+              consumed={consumed.fatG}
+              target={target.fatG}
+              unit="g"
+              color="#10b981"
+            />
+          </Tooltip>
         </div>
       </section>
 
@@ -130,6 +167,7 @@ const Dashboard = () => {
             onDelete={(id) => deleteMutation.mutate(id)}
             deletingId={deletingId}
             date={dateStr}
+            targetCalories={target.calories}
           />
         ))}
       </div>

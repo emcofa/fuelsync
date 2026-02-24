@@ -18,9 +18,16 @@ const logFoodSchema = z.object({
   loggedAt: z.string().optional(),
 });
 
+const updateFoodEntrySchema = z.object({
+  servingG: z.number().positive(),
+  mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).optional(),
+});
+
 router.post('/log', requireAuth, validateBody(logFoodSchema), foodController.logFood);
+router.put('/log/:id', requireAuth, validateBody(updateFoodEntrySchema), foodController.updateFoodEntry);
 router.get('/log/today', requireAuth, foodController.getDailyLog);
 router.get('/log/week', requireAuth, foodController.getWeeklyLog);
+router.get('/recent', requireAuth, foodController.getRecentFoods);
 router.delete('/log/:id', requireAuth, foodController.deleteEntry);
 
 export default router;
