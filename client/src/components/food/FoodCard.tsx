@@ -26,8 +26,8 @@ const FoodCard = ({ food, onSelect }: FoodCardProps) => {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-gray-900">{food.name}</p>
         <p className="text-xs text-gray-500">
-          {food.caloriesPer100g} kcal &middot; P {food.proteinPer100g}g &middot; C{' '}
-          {food.carbsPer100g}g &middot; F {food.fatPer100g}g
+          {Math.round(food.caloriesPer100g)} kcal &middot; P {Math.round(food.proteinPer100g)}g &middot; C{' '}
+          {Math.round(food.carbsPer100g)}g &middot; F {Math.round(food.fatPer100g)}g
           <span className="ml-1 text-gray-400">(per 100g)</span>
         </p>
       </div>
