@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
+import { toPer100g } from '../../lib/macroConversions';
 import { queryKeys, MEAL_LABELS, type FoodEntry, type MealType } from '../../types';
 import { useFavoriteToggle } from '../../hooks/useFavoriteToggle';
 
@@ -11,21 +12,16 @@ type EditFoodModalProps = {
 };
 
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
-const SERVING_BASE = 100;
 
 const EditFoodModal = ({ entry, date, onClose }: EditFoodModalProps) => {
   const queryClient = useQueryClient();
   const [servingG, setServingG] = useState(entry.servingG);
   const [mealType, setMealType] = useState<MealType>(entry.mealType);
 
-  const per100g = entry.servingG > 0 ? SERVING_BASE / entry.servingG : 1;
   const { isFavorite, isToggling, toggle } = useFavoriteToggle(entry.foodName, {
     foodName: entry.foodName,
     barcode: entry.barcode,
-    caloriesPer100g: Math.round(entry.calories * per100g),
-    proteinPer100g: Math.round(entry.proteinG * per100g * 100) / 100,
-    carbsPer100g: Math.round(entry.carbsG * per100g * 100) / 100,
-    fatPer100g: Math.round(entry.fatG * per100g * 100) / 100,
+    ...toPer100g(entry),
     source: 'custom',
   });
 

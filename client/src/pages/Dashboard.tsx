@@ -7,10 +7,15 @@ import { useDailyLog } from '../hooks/useDailyLog';
 import { useMacroTargets } from '../hooks/useMacroTargets';
 import DateNavigator from '../components/dashboard/DateNavigator';
 import CalorieBar from '../components/dashboard/CalorieBar';
-import MacroRing from '../components/dashboard/MacroRing';
+import MacroRingWithTooltip from '../components/dashboard/MacroRingWithTooltip';
 import MealSection from '../components/dashboard/MealSection';
-import Tooltip from '../components/ui/Tooltip';
 import AISuggestionPanel from '../components/ai/AISuggestionPanel';
+
+const MACRO_RINGS = [
+  { label: 'Protein', key: 'proteinG' as const, color: '#8b5cf6', description: 'Protein builds and preserves muscle mass.', kcalPerGram: 4 },
+  { label: 'Carbs', key: 'carbsG' as const, color: '#f59e0b', description: 'Carbs are the body\'s primary energy source.', kcalPerGram: 4 },
+  { label: 'Fat', key: 'fatG' as const, color: '#10b981', description: 'Fat is important for hormones and cell health.', kcalPerGram: 9 },
+] as const;
 
 const MEAL_SECTIONS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -99,63 +104,17 @@ const Dashboard = () => {
           <CalorieBar consumed={consumed.calories} target={target.calories} />
 
           <div className="flex justify-around rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
-            <Tooltip
-              content={
-                <div className="space-y-1 text-xs">
-                  <p>Target: {Math.round(target.proteinG)}g</p>
-                  <p>Consumed: {Math.round(consumed.proteinG)}g</p>
-                  <p>Remaining: {Math.round(Math.max(0, target.proteinG - consumed.proteinG))}g</p>
-                  <p className="pt-1 text-gray-300">Protein builds and preserves muscle mass.</p>
-                  <p className="text-gray-300">4 kcal per gram.</p>
-                </div>
-              }
-            >
-              <MacroRing
-                label="Protein"
-                consumed={consumed.proteinG}
-                target={target.proteinG}
-                unit="g"
-                color="#8b5cf6"
+            {MACRO_RINGS.map((ring) => (
+              <MacroRingWithTooltip
+                key={ring.key}
+                label={ring.label}
+                consumed={consumed[ring.key]}
+                target={target[ring.key]}
+                color={ring.color}
+                description={ring.description}
+                kcalPerGram={ring.kcalPerGram}
               />
-            </Tooltip>
-            <Tooltip
-              content={
-                <div className="space-y-1 text-xs">
-                  <p>Target: {Math.round(target.carbsG)}g</p>
-                  <p>Consumed: {Math.round(consumed.carbsG)}g</p>
-                  <p>Remaining: {Math.round(Math.max(0, target.carbsG - consumed.carbsG))}g</p>
-                  <p className="pt-1 text-gray-300">Carbs are the body's primary energy source.</p>
-                  <p className="text-gray-300">4 kcal per gram.</p>
-                </div>
-              }
-            >
-              <MacroRing
-                label="Carbs"
-                consumed={consumed.carbsG}
-                target={target.carbsG}
-                unit="g"
-                color="#f59e0b"
-              />
-            </Tooltip>
-            <Tooltip
-              content={
-                <div className="space-y-1 text-xs">
-                  <p>Target: {Math.round(target.fatG)}g</p>
-                  <p>Consumed: {Math.round(consumed.fatG)}g</p>
-                  <p>Remaining: {Math.round(Math.max(0, target.fatG - consumed.fatG))}g</p>
-                  <p className="pt-1 text-gray-300">Fat is important for hormones and cell health.</p>
-                  <p className="text-gray-300">9 kcal per gram.</p>
-                </div>
-              }
-            >
-              <MacroRing
-                label="Fat"
-                consumed={consumed.fatG}
-                target={target.fatG}
-                unit="g"
-                color="#10b981"
-              />
-            </Tooltip>
+            ))}
           </div>
         </div>
 

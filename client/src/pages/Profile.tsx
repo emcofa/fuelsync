@@ -5,6 +5,9 @@ import { apiFetch } from '../lib/api';
 import { profileSchema, type ProfileFormValues } from '../lib/validators';
 import { queryKeys, type UserProfile } from '../types';
 import { useEffect } from 'react';
+import FormField from '../components/ui/FormField';
+
+const INPUT_CLASS = 'w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
 
 const ACTIVITY_LABELS: Record<string, string> = {
   sedentary: 'Sedentary (little or no exercise)',
@@ -87,135 +90,62 @@ const Profile = () => {
         <fieldset className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <legend className="px-2 text-sm font-medium text-gray-700">Personal Info</legend>
 
-          <div>
-            <label htmlFor="name" className="mb-1 block text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              {...register('name')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-            {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
-          </div>
+          <FormField htmlFor="name" label="Name" error={errors.name?.message}>
+            <input id="name" type="text" {...register('name')} className={INPUT_CLASS} />
+          </FormField>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="age" className="mb-1 block text-sm font-medium text-gray-700">
-                Age
-              </label>
-              <input
-                id="age"
-                type="number"
-                {...register('age')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-              {errors.age && <p className="mt-1 text-sm text-red-600">{errors.age.message}</p>}
-            </div>
+            <FormField htmlFor="age" label="Age" error={errors.age?.message}>
+              <input id="age" type="number" {...register('age')} className={INPUT_CLASS} />
+            </FormField>
 
-            <div>
-              <label htmlFor="sex" className="mb-1 block text-sm font-medium text-gray-700">
-                Sex
-              </label>
-              <select
-                id="sex"
-                {...register('sex')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              >
+            <FormField htmlFor="sex" label="Sex" error={errors.sex?.message}>
+              <select id="sex" {...register('sex')} className={INPUT_CLASS}>
                 <option value="">Select...</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </select>
-              {errors.sex && <p className="mt-1 text-sm text-red-600">{errors.sex.message}</p>}
-            </div>
+            </FormField>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="weightKg" className="mb-1 block text-sm font-medium text-gray-700">
-                Weight (kg)
-              </label>
-              <input
-                id="weightKg"
-                type="number"
-                step="0.1"
-                {...register('weightKg')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-              {errors.weightKg && <p className="mt-1 text-sm text-red-600">{errors.weightKg.message}</p>}
-            </div>
+            <FormField htmlFor="weightKg" label="Weight (kg)" error={errors.weightKg?.message}>
+              <input id="weightKg" type="number" step="0.1" {...register('weightKg')} className={INPUT_CLASS} />
+            </FormField>
 
-            <div>
-              <label htmlFor="heightCm" className="mb-1 block text-sm font-medium text-gray-700">
-                Height (cm)
-              </label>
-              <input
-                id="heightCm"
-                type="number"
-                {...register('heightCm')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-              {errors.heightCm && <p className="mt-1 text-sm text-red-600">{errors.heightCm.message}</p>}
-            </div>
+            <FormField htmlFor="heightCm" label="Height (cm)" error={errors.heightCm?.message}>
+              <input id="heightCm" type="number" {...register('heightCm')} className={INPUT_CLASS} />
+            </FormField>
           </div>
         </fieldset>
 
         <fieldset className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <legend className="px-2 text-sm font-medium text-gray-700">Fitness & Diet</legend>
 
-          <div>
-            <label htmlFor="activityLevel" className="mb-1 block text-sm font-medium text-gray-700">
-              Activity Level
-            </label>
-            <select
-              id="activityLevel"
-              {...register('activityLevel')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
+          <FormField htmlFor="activityLevel" label="Activity Level" error={errors.activityLevel?.message}>
+            <select id="activityLevel" {...register('activityLevel')} className={INPUT_CLASS}>
               <option value="">Select...</option>
               {Object.entries(ACTIVITY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
+                <option key={value} value={value}>{label}</option>
               ))}
             </select>
-            {errors.activityLevel && <p className="mt-1 text-sm text-red-600">{errors.activityLevel.message}</p>}
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="goalType" className="mb-1 block text-sm font-medium text-gray-700">
-              Goal
-            </label>
-            <select
-              id="goalType"
-              {...register('goalType')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
+          <FormField htmlFor="goalType" label="Goal" error={errors.goalType?.message}>
+            <select id="goalType" {...register('goalType')} className={INPUT_CLASS}>
               <option value="cut">Cut (lose fat)</option>
               <option value="bulk">Bulk (gain muscle)</option>
               <option value="maintain">Maintain (recomp)</option>
             </select>
-            {errors.goalType && <p className="mt-1 text-sm text-red-600">{errors.goalType.message}</p>}
-          </div>
+          </FormField>
 
-          <div>
-            <label htmlFor="dietType" className="mb-1 block text-sm font-medium text-gray-700">
-              Diet Type
-            </label>
-            <select
-              id="dietType"
-              {...register('dietType')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
+          <FormField htmlFor="dietType" label="Diet Type" error={errors.dietType?.message}>
+            <select id="dietType" {...register('dietType')} className={INPUT_CLASS}>
               {Object.entries(DIET_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
+                <option key={value} value={value}>{label}</option>
               ))}
             </select>
-            {errors.dietType && <p className="mt-1 text-sm text-red-600">{errors.dietType.message}</p>}
-          </div>
+          </FormField>
         </fieldset>
 
         <div className="flex items-center gap-4">

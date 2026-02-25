@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
 import { queryKeys, type FoodSearchResult } from '../../types';
+import FormField from '../ui/FormField';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
@@ -21,6 +22,15 @@ type AddCustomFoodModalProps = {
   onClose: () => void;
   onSaved: (food: FoodSearchResult) => void;
 };
+
+const INPUT_CLASS = 'w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500';
+
+const MACRO_FIELDS = [
+  { id: 'cf-cal', name: 'caloriesPer100g' as const, label: 'Calories per 100g' },
+  { id: 'cf-protein', name: 'proteinPer100g' as const, label: 'Protein per 100g', step: '0.1' },
+  { id: 'cf-carbs', name: 'carbsPer100g' as const, label: 'Carbs per 100g', step: '0.1' },
+  { id: 'cf-fat', name: 'fatPer100g' as const, label: 'Fat per 100g', step: '0.1' },
+] as const;
 
 const AddCustomFoodModal = ({ initialName, onClose, onSaved }: AddCustomFoodModalProps) => {
   const queryClient = useQueryClient();
@@ -75,96 +85,33 @@ const AddCustomFoodModal = ({ initialName, onClose, onSaved }: AddCustomFoodModa
         <h2 className="mb-4 text-lg font-semibold text-gray-900">Add custom food</h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-          <div>
-            <label htmlFor="cf-name" className="mb-1 block text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
-              id="cf-name"
-              type="text"
-              {...register('name')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-            {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
-          </div>
+          <FormField htmlFor="cf-name" label="Name" error={errors.name?.message}>
+            <input id="cf-name" type="text" {...register('name')} className={INPUT_CLASS} />
+          </FormField>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="cf-cal" className="mb-1 block text-sm font-medium text-gray-700">
-                Calories per 100g
-              </label>
-              <input
-                id="cf-cal"
-                type="number"
-                {...register('caloriesPer100g')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-              {errors.caloriesPer100g && (
-                <p className="mt-1 text-xs text-red-500">{errors.caloriesPer100g.message}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="cf-protein" className="mb-1 block text-sm font-medium text-gray-700">
-                Protein per 100g
-              </label>
-              <input
-                id="cf-protein"
-                type="number"
-                step="0.1"
-                {...register('proteinPer100g')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-              {errors.proteinPer100g && (
-                <p className="mt-1 text-xs text-red-500">{errors.proteinPer100g.message}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="cf-carbs" className="mb-1 block text-sm font-medium text-gray-700">
-                Carbs per 100g
-              </label>
-              <input
-                id="cf-carbs"
-                type="number"
-                step="0.1"
-                {...register('carbsPer100g')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-              {errors.carbsPer100g && (
-                <p className="mt-1 text-xs text-red-500">{errors.carbsPer100g.message}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="cf-fat" className="mb-1 block text-sm font-medium text-gray-700">
-                Fat per 100g
-              </label>
-              <input
-                id="cf-fat"
-                type="number"
-                step="0.1"
-                {...register('fatPer100g')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-              {errors.fatPer100g && (
-                <p className="mt-1 text-xs text-red-500">{errors.fatPer100g.message}</p>
-              )}
-            </div>
+            {MACRO_FIELDS.map((field) => (
+              <FormField key={field.id} htmlFor={field.id} label={field.label} error={errors[field.name]?.message}>
+                <input
+                  id={field.id}
+                  type="number"
+                  step={field.step}
+                  {...register(field.name)}
+                  className={INPUT_CLASS}
+                />
+              </FormField>
+            ))}
           </div>
 
-          <div>
-            <label htmlFor="cf-serving" className="mb-1 block text-sm font-medium text-gray-700">
-              Default serving (g) <span className="text-gray-400">— optional</span>
-            </label>
+          <FormField htmlFor="cf-serving" label="Default serving (g) — optional" error={errors.defaultServingG?.message}>
             <input
               id="cf-serving"
               type="number"
               step="0.1"
               {...register('defaultServingG')}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-40"
+              className={`${INPUT_CLASS} sm:w-40`}
             />
-            {errors.defaultServingG && (
-              <p className="mt-1 text-xs text-red-500">{errors.defaultServingG.message}</p>
-            )}
-          </div>
+          </FormField>
 
           <div className="flex gap-3 pt-2">
             <button
