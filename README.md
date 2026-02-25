@@ -1,6 +1,6 @@
 # FuelSync
 
-A full-stack nutrition tracking web application inspired by Lifesum. Track meals, set macro targets, scan barcodes, and get AI-powered meal suggestions.
+A full-stack nutrition tracking web application. Track meals, set macro targets, scan barcodes, and get AI-powered meal suggestions.
 
 ## Tech Stack
 
@@ -17,16 +17,22 @@ A full-stack nutrition tracking web application inspired by Lifesum. Track meals
 
 ## Features
 
-- **Food logging** — Search the Livsmedelsverket database (Swedish food data) with Open Food Facts fallback, or scan barcodes
-- **Macro tracking** — Daily calorie bar and protein/carbs/fat ring charts
+- **Food search** — Open Food Facts Elasticsearch API with relevance scoring and diacritic normalization
+- **Barcode scanner** — Camera-based barcode scanning for quick food lookup
+- **Food logging** — Search, select serving size, log to breakfast/lunch/dinner/snack
+- **Custom foods** — Create and save custom food entries with per-100g macros
+- **Favorites** — Heart-toggle on search results, recent foods, and logged entries
+- **Recent foods** — Quick access to previously logged foods
+- **Quick tabs** — Recent / Favorites / This Meal tabs for fast re-logging
+- **Macro tracking** — Daily calorie bar and protein/carbs/fat ring charts with tooltips
 - **Goal modes** — Cut (deficit), bulk (surplus), or maintain with auto-calculated TDEE targets
 - **Custom targets** — Override any macro target manually
+- **Edit entries** — Update serving size and meal type for logged foods
 - **Date navigation** — Browse past and future days with a calendar picker
 - **Meal organisation** — Log food to breakfast, lunch, dinner, or snack
+- **Weekly progress** — 7-day charts for calories and macros
 - **AI suggestions** — GPT-4o powered meal recommendations based on remaining macros, goal mode, and diet type
 - **Diet types** — Standard, vegetarian, vegan, pescetarian, keto, paleo
-- **Barcode scanner** — Scan product barcodes to quickly log food
-- **Weekly progress** — 7-day charts for calories and macros
 
 ## Prerequisites
 
@@ -83,6 +89,8 @@ mysql -u root fuelsync < server/migrations/001_create_users.sql
 mysql -u root fuelsync < server/migrations/002_create_macro_targets.sql
 mysql -u root fuelsync < server/migrations/003_create_food_entries.sql
 mysql -u root fuelsync < server/migrations/004_create_custom_foods.sql
+mysql -u root fuelsync < server/migrations/005_create_user_favorites.sql
+mysql -u root fuelsync < server/migrations/006_add_default_serving_to_custom_foods.sql
 ```
 
 ### 5. Start the dev servers
@@ -103,31 +111,39 @@ The client runs at `http://localhost:5173` and the server at `http://localhost:3
 
 ```
 client/src/
-  components/       UI components organised by domain
-    ui/             Shared components (Navbar, Layout)
-    dashboard/      CalorieBar, MacroRing, MealSection, DateNavigator, MiniCalendar
-    food/           FoodSearchBar, FoodCard, FoodLogItem, BarcodeScanner
-    goals/          GoalModeSelector, MacroEditor
+  components/
+    ui/             Shared components (Navbar, Layout, FormField, Tooltip)
+    dashboard/      CalorieBar, MacroRing, MacroRingWithTooltip, MealSection,
+                    DateNavigator, MiniCalendar, WeeklyChart
+    food/           FoodSearchBar, FoodCard, QuickFoodCard, FoodConfirmation,
+                    QuickTabsPanel, FoodLogItem, BarcodeScanner,
+                    AddCustomFoodModal, EditFoodModal
+    goals/          GoalModeCard, MacroEditor
     ai/             AISuggestionPanel
-  pages/            One file per route (Dashboard, FoodLog, Goals, Profile, Progress)
-  hooks/            Custom hooks (useDailyLog, useFoodSearch, useMacroTargets, etc.)
-  lib/              Utilities (api.ts, tdee.ts)
+  pages/            Dashboard, FoodLog, Goals, Profile, Progress
+  hooks/            useDailyLog, useFoodSearch, useBarcodeScanner, useMacroTargets,
+                    useWeeklyProgress, useRecentFoods, useFavorites,
+                    useFavoriteToggle, useAISuggestion
+  lib/              api.ts, tdee.ts, macroConversions.ts, validators.ts,
+                    mealRecommendations.ts
   store/            Zustand stores
-  types/            Shared TypeScript types
+  types/            Shared TypeScript types and query keys
 
 server/src/
-  routes/           Route registration
+  routes/           Route registration (user, goals, food, search, favorites, ai)
   controllers/      Request/response handling
   services/         Business logic
   db/
     connection.ts   MySQL pool + Kysely instance
     types.ts        Kysely Database interface
-    queries/        Typed query functions
-  middleware/       requireAuth, syncUser, validateBody, errorHandler
+    queries/        Typed query functions (user, goals, food, customFoods, favorites)
+  middleware/       requireAuth, validateBody, errorHandler
   lib/              Utilities (tdee.ts)
 
-server/migrations/  SQL migration files
+server/migrations/  SQL migration files (001–006)
 ```
+
+See [client/README.md](client/README.md) and [server/README.md](server/README.md) for detailed docs including API routes and component breakdowns.
 
 ## Architecture
 
