@@ -250,8 +250,12 @@ server/migrations/  SQL migration files (001_create_users.sql, etc.)
 ### Open Food Facts
 
 - All calls to Open Food Facts are made server-side via the `/api/search` routes — never from the client directly
+- Use the **Elasticsearch API** (`search.openfoodfacts.org/search`) — NOT the legacy CGI endpoint (`world.openfoodfacts.org/cgi/search.pl`) which is 50x slower
 - Always normalize Open Food Facts responses through the `normalizeOpenFoodFacts()` function in `search.service.ts` before returning to the client
 - Filter out results where `caloriesPer100g` is 0 or null after normalisation — do not return incomplete food data
+- All results are scored for relevance using `scoreResult()` and sorted before returning — exact matches first, then prefix matches, then substring matches
+- Diacritics are normalized for matching (e.g., "creme fraiche" matches "crème fraîche") using `normalizeDiacritics()` — but the original name is always returned to the client
+- Livsmedelsverket has been removed as a data source — Open Food Facts provides all needed data (calories, macros, images, barcodes, serving sizes)
 
 ### AI Suggestions
 
@@ -355,6 +359,13 @@ All core features are built and functional.
 - Search bar pinned directly under meal tabs (no longer shifts with quick tabs)
 - Favorite toggle (heart icon) available on QuickFoodCard, EditFoodModal, and FoodCard
 - Shared `useFavoriteToggle` hook extracted to avoid duplication
+- Dashboard two-column responsive layout (480px left column + 1fr right)
+- Dashboard visual refresh: gradient calorie hero with animated SVG ring, macro rings, accordion meal sections with colored borders
+- FoodSearchBar refactored to controlled component (parent owns value)
+- Search backend replaced: Livsmedelsverket removed, switched to Open Food Facts Elasticsearch API (~0.2s vs ~10-60s)
+- Search relevance scoring with diacritic normalization (exact > prefix > word > substring)
+- Food image shown in log confirmation view when available
+- Layout max-width increased from max-w-2xl to max-w-screen-xl
 
 ---
 
@@ -420,7 +431,7 @@ All core features are built and functional.
 | `user.service.ts` | User sync and profile update logic |
 | `goals.service.ts` | Macro target calculation and override logic |
 | `food.service.ts` | Food logging, editing, deletion, daily/weekly queries |
-| `search.service.ts` | Livsmedelsverket + Open Food Facts search, barcode, custom food merge |
+| `search.service.ts` | Open Food Facts Elasticsearch search with relevance scoring, barcode lookup, custom food merge |
 | `favorites.service.ts` | Favorites business logic with duplicate check |
 | `ai.service.ts` | OpenAI GPT-4o meal suggestion generation |
 
@@ -497,7 +508,7 @@ All core features are built and functional.
 
 | File | Description |
 |------|-------------|
-| `FoodSearchBar.tsx` | Search input with loading indicator |
+| `FoodSearchBar.tsx` | Controlled search input with value/onChange props and inline loading spinner |
 | `FoodCard.tsx` | Search result card with image, macros, and favorite heart toggle |
 | `QuickFoodCard.tsx` | Compact food card for quick tabs with optional favorite toggle |
 | `FoodLogItem.tsx` | Single food entry row with edit and delete actions |
@@ -559,7 +570,7 @@ All 15 build phases are complete. Below is every file created or modified, with 
 | `services/user.service.ts` | syncUser (lazy create), getProfile, updateProfile (triggers macro recalc if not custom) |
 | `services/goals.service.ts` | getGoals, updateGoals (sets is_custom=true), resetGoals (recalculates from profile) |
 | `services/food.service.ts` | logFood, getDailyLog (UTC date range), getWeeklyLog (last 7 days), deleteEntry |
-| `services/search.service.ts` | Dual-API: Livsmedelsverket (cached full dataset, local search, parallel nutrient fetches) with Open Food Facts Sweden-filtered fallback; barcode via OFF only |
+| `services/search.service.ts` | Open Food Facts Elasticsearch search (Sweden-filtered) with relevance scoring, diacritic normalization, barcode lookup, custom food merge |
 | `services/ai.service.ts` | Lazy OpenAI client, buildPrompt (includes dietType), suggest (GPT-4o, JSON.parse in try/catch) |
 
 ### Server — `server/migrations/`
@@ -585,7 +596,7 @@ All 15 build phases are complete. Below is every file created or modified, with 
 | `hooks/useDailyLog.ts` | TanStack Query hook for GET /api/food/log/today |
 | `hooks/useMacroTargets.ts` | TanStack Query hook for GET /api/goals |
 | `hooks/useWeeklyProgress.ts` | TanStack Query hook for GET /api/food/log/week |
-| `hooks/useFoodSearch.ts` | TanStack Query hook with 400ms debounce, 5-min staleTime, placeholderData |
+| `hooks/useFoodSearch.ts` | TanStack Query hook with 300ms debounce, 2-min staleTime, keepPreviousData |
 | `hooks/useAISuggestion.ts` | useMutation hook for POST /api/ai/suggest |
 | `components/ui/Navbar.tsx` | Desktop top nav (indigo bar, links, sign out) + mobile bottom tab bar with icons |
 | `components/ui/Layout.tsx` | Shared layout wrapper — Navbar + centered main content area |
