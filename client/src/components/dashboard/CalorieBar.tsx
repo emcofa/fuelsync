@@ -5,8 +5,8 @@ type CalorieBarProps = {
   target: number;
 };
 
-const RING_SIZE = 140;
-const STROKE_WIDTH = 10;
+const RING_SIZE = 160;
+const STROKE_WIDTH = 12;
 const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -26,7 +26,7 @@ const CalorieBar = ({ consumed, target }: CalorieBarProps) => {
       <div className="flex items-center justify-between gap-4">
         {/* Left — consumed */}
         <div className="text-center">
-          <p className="text-2xl font-semibold">{consumed}</p>
+          <p className="text-3xl font-semibold">{consumed}</p>
           <p className="text-sm uppercase tracking-widest opacity-80">Ätit</p>
         </div>
 
@@ -58,8 +58,8 @@ const CalorieBar = ({ consumed, target }: CalorieBarProps) => {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-3xl font-bold leading-none">{remaining}</p>
-              <p className="mt-0.5 text-[10px] uppercase tracking-widest opacity-80">Återstående</p>
+              <p className="text-4xl font-bold leading-none">{remaining}</p>
+              <p className="mt-1 text-[11px] uppercase tracking-widest opacity-80">Återstående</p>
             </div>
           </div>
           <p className="mt-2 text-sm opacity-70">Mål {target} kcal</p>
@@ -67,7 +67,7 @@ const CalorieBar = ({ consumed, target }: CalorieBarProps) => {
 
         {/* Right — target */}
         <div className="text-center">
-          <p className="text-2xl font-semibold">{target}</p>
+          <p className="text-3xl font-semibold">{target}</p>
           <p className="text-sm uppercase tracking-widest opacity-80">Mål</p>
         </div>
       </div>

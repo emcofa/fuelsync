@@ -90,101 +90,103 @@ const Dashboard = () => {
   };
 
   return (
-    <>
+    <div className="mx-auto max-w-screen-xl px-6">
       <DateNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
 
-      <section className="mb-6">
-        <CalorieBar consumed={consumed.calories} target={target.calories} />
+      <div className="mt-6 lg:grid lg:grid-cols-[480px_1fr] lg:items-start lg:gap-8">
+        {/* Left column — calorie hero + macro rings */}
+        <div className="space-y-4 lg:sticky lg:top-6">
+          <CalorieBar consumed={consumed.calories} target={target.calories} />
 
-        <div className="mt-4 flex justify-around rounded-xl border border-gray-200 bg-white px-4 py-5 shadow-sm">
-          <Tooltip
-            content={
-              <div className="space-y-1 text-xs">
-                <p>Target: {Math.round(target.proteinG)}g</p>
-                <p>Consumed: {Math.round(consumed.proteinG)}g</p>
-                <p>Remaining: {Math.round(Math.max(0, target.proteinG - consumed.proteinG))}g</p>
-                <p className="pt-1 text-gray-300">Protein builds and preserves muscle mass.</p>
-                <p className="text-gray-300">4 kcal per gram.</p>
-              </div>
-            }
-          >
-            <MacroRing
-              label="Protein"
-              consumed={consumed.proteinG}
-              target={target.proteinG}
-              unit="g"
-              color="#8b5cf6"
-            />
-          </Tooltip>
-          <Tooltip
-            content={
-              <div className="space-y-1 text-xs">
-                <p>Target: {Math.round(target.carbsG)}g</p>
-                <p>Consumed: {Math.round(consumed.carbsG)}g</p>
-                <p>Remaining: {Math.round(Math.max(0, target.carbsG - consumed.carbsG))}g</p>
-                <p className="pt-1 text-gray-300">Carbs are the body's primary energy source.</p>
-                <p className="text-gray-300">4 kcal per gram.</p>
-              </div>
-            }
-          >
-            <MacroRing
-              label="Carbs"
-              consumed={consumed.carbsG}
-              target={target.carbsG}
-              unit="g"
-              color="#f59e0b"
-            />
-          </Tooltip>
-          <Tooltip
-            content={
-              <div className="space-y-1 text-xs">
-                <p>Target: {Math.round(target.fatG)}g</p>
-                <p>Consumed: {Math.round(consumed.fatG)}g</p>
-                <p>Remaining: {Math.round(Math.max(0, target.fatG - consumed.fatG))}g</p>
-                <p className="pt-1 text-gray-300">Fat is important for hormones and cell health.</p>
-                <p className="text-gray-300">9 kcal per gram.</p>
-              </div>
-            }
-          >
-            <MacroRing
-              label="Fat"
-              consumed={consumed.fatG}
-              target={target.fatG}
-              unit="g"
-              color="#10b981"
-            />
-          </Tooltip>
+          <div className="flex justify-around rounded-xl border border-gray-200 bg-white px-6 py-6 shadow-sm">
+            <Tooltip
+              content={
+                <div className="space-y-1 text-xs">
+                  <p>Target: {Math.round(target.proteinG)}g</p>
+                  <p>Consumed: {Math.round(consumed.proteinG)}g</p>
+                  <p>Remaining: {Math.round(Math.max(0, target.proteinG - consumed.proteinG))}g</p>
+                  <p className="pt-1 text-gray-300">Protein builds and preserves muscle mass.</p>
+                  <p className="text-gray-300">4 kcal per gram.</p>
+                </div>
+              }
+            >
+              <MacroRing
+                label="Protein"
+                consumed={consumed.proteinG}
+                target={target.proteinG}
+                unit="g"
+                color="#8b5cf6"
+              />
+            </Tooltip>
+            <Tooltip
+              content={
+                <div className="space-y-1 text-xs">
+                  <p>Target: {Math.round(target.carbsG)}g</p>
+                  <p>Consumed: {Math.round(consumed.carbsG)}g</p>
+                  <p>Remaining: {Math.round(Math.max(0, target.carbsG - consumed.carbsG))}g</p>
+                  <p className="pt-1 text-gray-300">Carbs are the body's primary energy source.</p>
+                  <p className="text-gray-300">4 kcal per gram.</p>
+                </div>
+              }
+            >
+              <MacroRing
+                label="Carbs"
+                consumed={consumed.carbsG}
+                target={target.carbsG}
+                unit="g"
+                color="#f59e0b"
+              />
+            </Tooltip>
+            <Tooltip
+              content={
+                <div className="space-y-1 text-xs">
+                  <p>Target: {Math.round(target.fatG)}g</p>
+                  <p>Consumed: {Math.round(consumed.fatG)}g</p>
+                  <p>Remaining: {Math.round(Math.max(0, target.fatG - consumed.fatG))}g</p>
+                  <p className="pt-1 text-gray-300">Fat is important for hormones and cell health.</p>
+                  <p className="text-gray-300">9 kcal per gram.</p>
+                </div>
+              }
+            >
+              <MacroRing
+                label="Fat"
+                consumed={consumed.fatG}
+                target={target.fatG}
+                unit="g"
+                color="#10b981"
+              />
+            </Tooltip>
+          </div>
         </div>
-      </section>
 
-      <div className="space-y-4">
-        {MEAL_SECTIONS.map((type) => (
-          <MealSection
-            key={type}
-            mealType={type}
-            label={MEAL_LABELS[type]}
-            entries={log?.entries ?? []}
-            onDelete={(id) => deleteMutation.mutate(id)}
-            deletingId={deletingId}
-            date={dateStr}
-            targetCalories={target.calories}
-          />
-        ))}
+        {/* Right column — meal sections */}
+        <div className="mt-6 space-y-4 lg:mt-0">
+          {MEAL_SECTIONS.map((type) => (
+            <MealSection
+              key={type}
+              mealType={type}
+              label={MEAL_LABELS[type]}
+              entries={log?.entries ?? []}
+              onDelete={(id) => deleteMutation.mutate(id)}
+              deletingId={deletingId}
+              date={dateStr}
+              targetCalories={target.calories}
+            />
+          ))}
+
+          {profile && (
+            <AISuggestionPanel
+              remainingCalories={Math.max(0, target.calories - consumed.calories)}
+              remainingProteinG={Math.max(0, target.proteinG - consumed.proteinG)}
+              remainingCarbsG={Math.max(0, target.carbsG - consumed.carbsG)}
+              remainingFatG={Math.max(0, target.fatG - consumed.fatG)}
+              goalMode={profile.goalType}
+              dietType={profile.dietType}
+            />
+          )}
+        </div>
       </div>
-
-      {profile && (
-        <div className="mt-6">
-          <AISuggestionPanel
-            remainingCalories={Math.max(0, target.calories - consumed.calories)}
-            remainingProteinG={Math.max(0, target.proteinG - consumed.proteinG)}
-            remainingCarbsG={Math.max(0, target.carbsG - consumed.carbsG)}
-            remainingFatG={Math.max(0, target.fatG - consumed.fatG)}
-            goalMode={profile.goalType}
-            dietType={profile.dietType}
-          />
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 

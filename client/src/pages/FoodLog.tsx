@@ -186,7 +186,7 @@ const FoodLog = () => {
       {/* Search bar — always directly under meal tabs */}
       <div className="mb-4 flex gap-2">
         <div className="flex-1">
-          <FoodSearchBar onSearch={setSearchQuery} isLoading={isFetching} />
+          <FoodSearchBar value={searchQuery} onChange={setSearchQuery} isLoading={isFetching} />
         </div>
         <button
           type="button"
@@ -360,7 +360,16 @@ const FoodLog = () => {
 
       {selected && (
         <section className="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">{selected.name}</h2>
+          <div className="mb-4 flex items-center gap-4">
+            {selected.imageUrl && (
+              <img
+                src={selected.imageUrl}
+                alt={selected.name}
+                className="h-16 w-16 shrink-0 rounded-lg object-cover"
+              />
+            )}
+            <h2 className="text-lg font-semibold text-gray-900">{selected.name}</h2>
+          </div>
 
           <div className="mb-4">
             <label htmlFor="serving" className="mb-1 block text-sm font-medium text-gray-700">

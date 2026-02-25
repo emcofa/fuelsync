@@ -1,19 +1,10 @@
-import { useState } from 'react';
-
 type FoodSearchBarProps = {
-  onSearch: (query: string) => void;
+  value: string;
+  onChange: (query: string) => void;
   isLoading?: boolean;
 };
 
-const FoodSearchBar = ({ onSearch, isLoading }: FoodSearchBarProps) => {
-  const [value, setValue] = useState('');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const next = e.target.value;
-    setValue(next);
-    onSearch(next);
-  };
-
+const FoodSearchBar = ({ value, onChange, isLoading }: FoodSearchBarProps) => {
   return (
     <div className="relative">
       <label htmlFor="food-search" className="sr-only">
@@ -23,7 +14,7 @@ const FoodSearchBar = ({ onSearch, isLoading }: FoodSearchBarProps) => {
         id="food-search"
         type="text"
         value={value}
-        onChange={handleChange}
+        onChange={(e) => onChange(e.target.value)}
         placeholder="Search for a food..."
         className="w-full rounded-md border border-gray-300 px-3 py-2 pr-9 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
       />

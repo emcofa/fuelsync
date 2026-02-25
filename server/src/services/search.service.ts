@@ -60,14 +60,38 @@ type FoodSearchResult = {
   defaultServingG: number | null;
 };
 
-// --- Livsmedelsverket cache ---
+// --- Fetch helper (plain fetch, no timeout for now) ---
+
+const fetchSafe = async (url: string): Promise<Response> => {
+  return fetch(url);
+};
+
+// --- Livsmedelsverket cache with lock ---
 
 let cachedLivsmedel: LivsmedelsverketItem[] | null = null;
+let cacheLoadPromise: Promise<LivsmedelsverketItem[]> | null = null;
 
 const getAllLivsmedel = async (): Promise<LivsmedelsverketItem[]> => {
   if (cachedLivsmedel) return cachedLivsmedel;
 
-  const firstRes = await fetch(
+  // Prevent concurrent loads — reuse the same promise
+  if (cacheLoadPromise) return cacheLoadPromise;
+
+  cacheLoadPromise = loadAllLivsmedel();
+
+  try {
+    const items = await cacheLoadPromise;
+    cachedLivsmedel = items;
+    return items;
+  } catch (err) {
+    // Reset so next request retries
+    cacheLoadPromise = null;
+    throw err;
+  }
+};
+
+const loadAllLivsmedel = async (): Promise<LivsmedelsverketItem[]> => {
+  const firstRes = await fetchSafe(
     `${LIVSMEDELSVERKET_BASE}/livsmedel?offset=0&limit=${LIVSMEDELSVERKET_PAGE_SIZE}&sprak=1`,
   );
   if (!firstRes.ok) throw new Error(`Livsmedelsverket initial fetch failed: ${firstRes.status}`);
@@ -84,7 +108,7 @@ const getAllLivsmedel = async (): Promise<LivsmedelsverketItem[]> => {
   if (offsets.length > 0) {
     const pages = await Promise.all(
       offsets.map(async (offset) => {
-        const res = await fetch(
+        const res = await fetchSafe(
           `${LIVSMEDELSVERKET_BASE}/livsmedel?offset=${offset}&limit=${LIVSMEDELSVERKET_PAGE_SIZE}&sprak=1`,
         );
         if (!res.ok) throw new Error(`Livsmedelsverket page fetch failed: ${res.status}`);
@@ -97,7 +121,6 @@ const getAllLivsmedel = async (): Promise<LivsmedelsverketItem[]> => {
     }
   }
 
-  cachedLivsmedel = items;
   console.log(`Livsmedelsverket cache loaded: ${items.length} items`);
   return items;
 };
@@ -176,7 +199,7 @@ const searchOpenFoodFacts = async (query: string): Promise<FoodSearchResult[]> =
   url.searchParams.set('page_size', '15');
   url.searchParams.set('lc', 'sv');
 
-  const res = await fetch(url.toString());
+  const res = await fetchSafe(url.toString());
   if (!res.ok) throw new Error(`Open Food Facts API error: ${res.status}`);
 
   const data = (await res.json()) as { products?: OpenFoodFactsProduct[] };
@@ -205,43 +228,62 @@ const searchCustomFoods = async (userId: string, query: string): Promise<FoodSea
 };
 
 const searchExternalFoods = async (query: string): Promise<FoodSearchResult[]> => {
-  // Primary: Livsmedelsverket (cached local search + parallel nutrient fetches)
-  try {
-    const allItems = await getAllLivsmedel();
-    const matched = searchCached(allItems, query);
+  // Search both sources in parallel
+  // TODO: Livsmedelsverket temporarily disabled for testing
+  const [livsmedelItems, offItems] = await Promise.all([
+    Promise.resolve([] as FoodSearchResult[]),
+    searchOpenFoodFacts(query).catch((err) => {
+      console.error('Open Food Facts search failed:', err);
+      return [] as FoodSearchResult[];
+    }),
+  ]);
 
-    if (matched.length > 0) {
-      const results = await Promise.allSettled(
-        matched.map(async (item) => {
-          const rel = item.links.find((l) => l.rel === 'naringvarden');
-          if (!rel) return null;
-          const url = `https://dataportal.livsmedelsverket.se/livsmedel${rel.href}`;
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`Nutrient fetch failed: ${res.status}`);
-          const data = (await res.json()) as NaringsvardeItem[];
-          return normalizeLivsmedelsverket(item, data);
-        }),
-      );
+  // Deduplicate by lowercase name — prefer Livsmedelsverket results
+  const seen = new Set<string>();
+  const combined: FoodSearchResult[] = [];
 
-      const successful = results
-        .filter((r): r is PromiseFulfilledResult<FoodSearchResult | null> =>
-          r.status === 'fulfilled' && r.value !== null && r.value.caloriesPer100g > 0,
-        )
-        .map((r) => r.value as FoodSearchResult);
-
-      if (successful.length > 0) return successful;
+  for (const item of livsmedelItems) {
+    const key = item.name.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      combined.push(item);
     }
-  } catch (err) {
-    console.error('Livsmedelsverket search failed, falling back:', err);
   }
 
-  // Fallback: Open Food Facts (Sweden-filtered)
-  try {
-    return await searchOpenFoodFacts(query);
-  } catch (err) {
-    console.error('Open Food Facts search also failed:', err);
-    return [];
+  for (const item of offItems) {
+    const key = item.name.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      combined.push(item);
+    }
   }
+
+  return combined.slice(0, 15);
+};
+
+const searchLivsmedelsverket = async (query: string): Promise<FoodSearchResult[]> => {
+  const allItems = await getAllLivsmedel();
+  const matched = searchCached(allItems, query);
+
+  if (matched.length === 0) return [];
+
+  const results = await Promise.allSettled(
+    matched.map(async (item) => {
+      const rel = item.links.find((l) => l.rel === 'naringvarden');
+      if (!rel) return null;
+      const url = `https://dataportal.livsmedelsverket.se/livsmedel${rel.href}`;
+      const res = await fetchSafe(url);
+      if (!res.ok) throw new Error(`Nutrient fetch failed: ${res.status}`);
+      const data = (await res.json()) as NaringsvardeItem[];
+      return normalizeLivsmedelsverket(item, data);
+    }),
+  );
+
+  return results
+    .filter((r): r is PromiseFulfilledResult<FoodSearchResult | null> =>
+      r.status === 'fulfilled' && r.value !== null && r.value.caloriesPer100g > 0,
+    )
+    .map((r) => r.value as FoodSearchResult);
 };
 
 export const searchFood = async (query: string, userId: string): Promise<FoodSearchResult[]> => {
@@ -249,7 +291,12 @@ export const searchFood = async (query: string, userId: string): Promise<FoodSea
     searchCustomFoods(userId, query),
     searchExternalFoods(query),
   ]);
-  return [...customFoods, ...apiResults].slice(0, 15);
+
+  // Deduplicate custom foods against external results
+  const customNames = new Set(customFoods.map((f) => f.name.toLowerCase()));
+  const filteredApi = apiResults.filter((f) => !customNames.has(f.name.toLowerCase()));
+
+  return [...customFoods, ...filteredApi].slice(0, 15);
 };
 
 export const createCustomFood = async (
@@ -279,7 +326,9 @@ export const createCustomFood = async (
 };
 
 export const searchBarcode = async (code: string): Promise<FoodSearchResult | null> => {
-  const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`);
+  const res = await fetchSafe(
+    `https://world.openfoodfacts.org/api/v0/product/${encodeURIComponent(code)}.json`,
+  );
   if (!res.ok) throw new Error(`Open Food Facts API error: ${res.status}`);
 
   const data = (await res.json()) as { status: number; product?: OpenFoodFactsProduct };
