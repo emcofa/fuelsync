@@ -71,7 +71,7 @@ export type FoodSearchResult = {
   carbsPer100g: number;
   fatPer100g: number;
   imageUrl: string | null;
-  source: 'livsmedelsverket' | 'open_food_facts' | 'custom';
+  source: 'open_food_facts' | 'custom';
   defaultServingG: number | null;
 };
 
