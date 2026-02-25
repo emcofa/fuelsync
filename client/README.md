@@ -1,73 +1,143 @@
-# React + TypeScript + Vite
+# FuelSync
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack nutrition tracking web application that helps users monitor daily macro intake, search foods, scan barcodes, and get AI-powered meal suggestions.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Frontend
+- React 19 + TypeScript (strict) + Vite
+- Tailwind CSS v3
+- TanStack Query v5 (server state)
+- React Hook Form + Zod (form validation)
+- Recharts (progress charts)
+- Clerk (authentication)
+- html5-qrcode (barcode scanning)
 
-## React Compiler
+### Backend
+- Node.js 20+ + Express 5 + TypeScript (strict)
+- MySQL 8+ via Kysely query builder
+- Clerk (`@clerk/express` for JWT verification)
+- OpenAI GPT-4o (AI meal suggestions)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+- **Dashboard** — Daily calorie bar, macro rings (protein/carbs/fat), meal sections with date navigation
+- **Food Logging** — Search foods via Open Food Facts, select serving size, log to meals
+- **Barcode Scanner** — Camera-based barcode scanning for quick food lookup
+- **Custom Foods** — Create and save custom food entries with per-100g macros
+- **Favorites** — Heart-toggle on search results, recent foods, and logged entries
+- **Recent Foods** — Quick access to previously logged foods
+- **Quick Tabs** — Recent / Favorites / This Meal tabs for fast re-logging
+- **Macro Targets** — Auto-calculated from profile (TDEE + goal adjustment) or custom override
+- **Goal Modes** — Cut, bulk, or maintain with appropriate calorie/macro adjustments
+- **Progress Charts** — Weekly calorie and macro trend charts
+- **AI Suggestions** — GPT-4o meal suggestions based on remaining macros and dietary preferences
+- **Diet Types** — Standard, vegetarian, vegan, pescetarian, keto, paleo
+- **Edit Entries** — Update serving size and meal type for logged foods
+- **Date Navigation** — Browse past days with calendar picker
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Project Structure
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+```
+client/src/
+  components/
+    ui/             Reusable UI (Navbar, Layout, FormField, Tooltip)
+    food/           Food components (FoodCard, QuickFoodCard, FoodConfirmation,
+                    QuickTabsPanel, BarcodeScanner, AddCustomFoodModal, EditFoodModal)
+    dashboard/      Dashboard components (CalorieBar, MacroRing, MacroRingWithTooltip,
+                    MealSection, DateNavigator, MiniCalendar, WeeklyChart)
+    goals/          Goal mode and macro editor
+    ai/             AI suggestion panel
+  pages/            Dashboard, FoodLog, Goals, Profile, Progress
+  hooks/            Custom hooks (useDailyLog, useFoodSearch, useBarcodeScanner,
+                    useFavorites, useFavoriteToggle, useRecentFoods, etc.)
+  lib/              Utilities (api.ts, tdee.ts, macroConversions.ts, validators.ts)
+  types/            Shared TypeScript types and query keys
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+server/src/
+  routes/           Route registration (user, goals, food, search, favorites, ai)
+  controllers/      Request/response handling
+  services/         Business logic
+  db/               Kysely connection, types, and query files
+  middleware/       Auth, validation, error handling
+  lib/              TDEE calculations
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+server/migrations/  SQL migration files
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
+- Node.js 20+
+- MySQL 8+
+- Clerk account (for authentication)
+- OpenAI API key (for AI suggestions)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Environment Variables
+
+**server/.env**
 ```
+PORT=3001
+CLIENT_URL=http://localhost:5173
+NODE_ENV=development
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=fuelsync
+CLERK_SECRET_KEY=sk_test_...
+OPENAI_API_KEY=sk-...
+```
+
+**client/.env**
+```
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+VITE_API_BASE_URL=http://localhost:3001
+```
+
+### Setup
+
+1. Clone the repository
+2. Run SQL migrations in `server/migrations/` (in order: 001 through 006)
+3. Install dependencies and start both servers:
+
+```bash
+# Server
+cd server
+npm install
+npm run dev
+
+# Client (separate terminal)
+cd client
+npm install
+npm run dev
+```
+
+The client runs on `http://localhost:5173` and the server on `http://localhost:3001`.
+
+## API Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/user/profile` | Get user profile |
+| PUT | `/api/user/profile` | Update user profile |
+| GET | `/api/goals` | Get macro targets |
+| PUT | `/api/goals` | Update macro targets (custom) |
+| POST | `/api/goals/reset` | Reset to calculated targets |
+| POST | `/api/food/log` | Log a food entry |
+| GET | `/api/food/log/today?date=YYYY-MM-DD` | Get daily food log |
+| GET | `/api/food/log/week` | Get weekly food log |
+| PUT | `/api/food/log/:id` | Update a food entry |
+| DELETE | `/api/food/log/:id` | Delete a food entry |
+| GET | `/api/food/recent` | Get recently logged foods |
+| GET | `/api/search/food?q=query` | Search foods (Open Food Facts) |
+| GET | `/api/search/barcode/:code` | Barcode lookup |
+| POST | `/api/search/custom` | Create custom food |
+| GET | `/api/favorites` | Get user favorites |
+| POST | `/api/favorites` | Add a favorite |
+| DELETE | `/api/favorites/:id` | Remove a favorite |
+| POST | `/api/ai/suggest` | Get AI meal suggestions |
+
+## Search
+
+Food search uses the [Open Food Facts Elasticsearch API](https://search.openfoodfacts.org) filtered to Sweden. Results are ranked by relevance scoring with diacritic normalization (handles Swedish characters like a, o, a). Custom user-created foods are merged into results with priority over Open Food Facts matches.
